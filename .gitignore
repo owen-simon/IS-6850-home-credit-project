@@ -1,0 +1,49 @@
+# Operating system files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+env/
+venv/
+.venv/
+dist/
+build/
+*.egg-info/
+\.eggs/
+
+# Data
+*.csv
+data/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# R
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# IDEs
+.vscode/
+.idea/
+
+# Project artifacts
+data/
+outputs/
+models/
+*.csv
+*.parquet
+*.rds
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
