@@ -1,6 +1,6 @@
 
 ---
-title: "Exploratory Data Analysis — Home Credit"
+title: "Exploratory Data Analysis"
 author: "Owen Simon"
 format: 
   html:
@@ -23,236 +23,116 @@ Many potential borrowers lack sufficient credit histories, making it difficult f
 ```{r}
 # Load libraries
 library(tidyverse)
-library(readr)
-library(ggplot2)
-library(scales)
-library(naniar)
-library(broom)
+library(tidyr)
+library(dplyr)
+library(gt)
 
 data_dir <- "data-files"
 
 # Read primary datasets
-train <- read_csv(file.path(data_dir, "application_train.csv"), show_col_types = FALSE)
-test  <- read_csv(file.path(data_dir, "application_test.csv"),  show_col_types = FALSE)
-
-# Quick peek
-train |> slice_head(n = 5)
+train <- read_csv(file.path(data_dir, "application_train.csv"))
+test  <- read_csv(file.path(data_dir, "application_test.csv"))
 ```
 
-**How to use this template**: Each section contains code and short interpretation hints. Use it to produce summary tables and figures to inform feature engineering and cleaning.
-
-**Helpers**
+# 1 - Majority Class Analysis
 
 ```{r}
-skim_target <- function(df) {
-	df |> summarise(
-		n = n(),
-		positives = sum(TARGET == 1, na.rm = TRUE),
-		negatives = sum(TARGET == 0, na.rm = TRUE),
-		prop_positive = mean(TARGET == 1, na.rm = TRUE)
-	)
-}
+target_proportion <- train |>
+  count(TARGET) |>
+  mutate(Proportion = round(n / sum(n), 4)) |>
+  rename(
+    Default = TARGET,
+    Count = n
+  )
 
-majority_baseline <- function(df) {
-	p <- mean(df$TARGET == 1, na.rm = TRUE)
-	max(p, 1 - p)
-}
+gt(target_proportion)
 ```
 
-**1 — Target exploration**
+A majority-class model that always predicts non-default would achieve an accuracy of approximately 92%.
+
+# 2 - Correlation Analysis
+
+## 2.1 - Numeric Variables
 
 ```{r}
-target_summary <- skim_target(train)
-target_summary
+# Select Numeric Variables
+numeric_vars <- train |> select(where(is.numeric)) |>
+	select(-TARGET) |> 
+	names()
 
-baseline_acc <- majority_baseline(train)
-baseline_acc
+# Calculate Correlation with Target
+numeric_summary <- lapply(numeric_vars, function(x) {
+  data.frame(
+    Predictor = x,
+    Correlation_with_Target = cor(train[[x]], train$TARGET, use = "complete.obs")
+  )
+}) |> bind_rows()
 
-ggplot(train, aes(x = factor(TARGET), fill = factor(TARGET))) +
-	geom_bar() +
-	scale_fill_brewer(type = "qual", palette = "Set1") +
-	labs(title = "Target class counts", x = "TARGET", y = "Count")
+# Rank by absolute correlation
+numeric_summary <- numeric_summary |> 
+	arrange(desc(abs(Correlation_with_Target)))
+
+gt(numeric_summary)
 ```
 
-Notes: If `baseline_acc` is large, the dataset is imbalanced — prefer AUC/precision-recall for model evaluation.
-
-**2 — Numeric predictors: ranking and visualization**
+## 2.2 - Categorical Variables
 
 ```{r}
-# Select numeric variables excluding id & target
-num_vars <- train |> select(where(is.numeric)) |> select(-SK_ID_CURR, -TARGET) |> names()
+# Convert character columns to factors
+train_factored <- train |>
+  mutate(across(where(is.character), as.factor))
 
-# Standardized mean difference (SMD) ranking
-smd_df <- train |>
-	select(SK_ID_CURR, TARGET, all_of(num_vars)) |>
-	pivot_longer(cols = all_of(num_vars), names_to = "variable", values_to = "value") |>
-	group_by(variable) |>
-	summarise(
-		mean_0 = mean(value[TARGET == 0], na.rm = TRUE),
-		mean_1 = mean(value[TARGET == 1], na.rm = TRUE),
-		sd_all = sd(value, na.rm = TRUE),
-		n_nonmiss = sum(!is.na(value))
-	) |>
-	mutate(smd = (mean_1 - mean_0) / sd_all) |>
-	arrange(desc(abs(smd)))
+categorical_vars <- train_factored |> select(where(is.factor)) |> names()
 
-smd_df |> slice_head(n = 20)
+categorical_summary <- lapply(categorical_vars, function(var) {
+  # calculate max proportion difference between target classes for each category
+  prop_diff <- train_factored |>
+    group_by(.data[[var]], TARGET) |>
+    summarise(n = n(), .groups = "drop") |>
+    pivot_wider(names_from = TARGET, values_from = n, values_fill = 0) |>
+    mutate(
+      Total = `0` + `1`,
+      Proportion_0 = `0` / Total,
+      Proportion_1 = `1` / Total,
+      Difference = abs(Proportion_1 - Proportion_0)
+    )
+  
+  # return a data frame with max difference for this variable
+  data.frame(
+    Predictor = var,
+    Max_Proportion_Diff = max(prop_diff$Difference, na.rm = TRUE)
+  )
+}) |> bind_rows()
 
-# Plot top numeric candidates
-top_numeric <- smd_df |> slice_max(order_by = abs(smd), n = 6) |> pull(variable)
+# Rank by largest difference
+categorical_summary <- categorical_summary |> 
+    arrange(desc(Max_Proportion_Diff))
 
-train |> select(TARGET, all_of(top_numeric)) |> pivot_longer(-TARGET, names_to = "var", values_to = "val") |>
-	ggplot(aes(x = factor(TARGET), y = val, fill = factor(TARGET))) +
-	geom_boxplot(outlier.shape = NA) +
-	facet_wrap(~ var, scales = "free", ncol = 2) +
-	labs(title = "Top numeric predictors by SMD: distribution by TARGET")
+gt(categorical_summary)
 ```
-
-Interpretation: SMD highlights variables with different group means — good candidates for modeling or transformation.
-
-**3 — Categorical predictors: target-rate spread and visualization**
 
 ```{r}
-cat_vars <- train |> select(where(~!is.numeric(.x))) |> names()
+# Add a placeholder SalePrice to test
+test <- test |> 
+  mutate(TARGET = NA)
 
-cat_scores <- map_dfr(cat_vars, function(v) {
-	train |> group_by(.data[[v]]) |> summarise(count = n(), target_rate = mean(TARGET == 1, na.rm = TRUE)) |> mutate(variable = v)
-})
-
-cat_rank <- cat_scores |> group_by(variable) |> summarise(spread = max(target_rate, na.rm = TRUE) - min(target_rate, na.rm = TRUE)) |> arrange(desc(spread))
-cat_rank |> slice_head(n = 20)
-
-# Example plot for a common categorical column
-if ("NAME_CONTRACT_TYPE" %in% cat_vars) {
-	ggplot(train, aes(x = fct_lump(NAME_CONTRACT_TYPE, n = 6), fill = factor(TARGET))) +
-		geom_bar(position = "fill") +
-		labs(y = "Proportion", title = "Proportion of TARGET by NAME_CONTRACT_TYPE")
-}
+# Combine train and test
+combined <- bind_rows(
+  train |> mutate(dataset = "train"),
+  test  |> mutate(dataset = "test")
+)
 ```
-
-Categorical columns with high `spread` are promising. Treat cardinality carefully (target encoding / frequency encoding / one-hot) depending on model.
-
-**4 — Missing data: scope and recommendations**
 
 ```{r}
-miss_train <- train |> miss_var_summary()
-miss_train |> arrange(desc(n_miss)) |> slice_head(n = 30)
+#count NAs
+count_missings <- function(x) sum(is.na(x))
 
-# Visual missingness on a sample
-train |> sample_n(min(2000, nrow(train))) |> gg_miss_upset()
+missing_summary <- combined |>
+  summarize_all(count_missings) |>
+  pivot_longer(cols = everything(),
+               names_to = "column",
+               values_to = "missing") |>
+  filter(missing > 0)
 
-missing_pct <- train |> summarise(across(everything(), ~ mean(is.na(.x)))) |> pivot_longer(everything(), names_to = "var", values_to = "pct_missing") |> arrange(desc(pct_missing))
-missing_pct |> slice_head(n = 30)
+gt(missing_summary)
 ```
-
-Recommendations (examples):
-
-- Remove columns with very high missingness (> 40%) only if they add little predictive value.
-- For numeric features, use median imputation plus a binary missingness indicator.
-- For categorical features, consider treating NA as its own level or model-based imputation for high-impact columns.
-
-**5 — Data quality and sentinel values**
-
-```{r}
-# Example sentinel handling: DAYS_EMPLOYED uses 365243 as a sentinel for unknown
-if ("DAYS_EMPLOYED" %in% names(train)) {
-	sentinel <- 365243
-	sum(train$DAYS_EMPLOYED == sentinel, na.rm = TRUE)
-	train <- train |> mutate(DAYS_EMPLOYED = na_if(DAYS_EMPLOYED, sentinel))
-}
-
-# Convert DAYS_BIRTH to AGE_YEARS
-if ("DAYS_BIRTH" %in% names(train)) {
-	train <- train |> mutate(AGE_YEARS = -DAYS_BIRTH / 365.25)
-}
-
-# Near-zero variance
-nzv <- train |> summarise(across(everything(), ~ n_distinct(.x, na.rm = TRUE))) |> pivot_longer(everything(), names_to = "var", values_to = "n_distinct") |> filter(n_distinct <= 1)
-nzv
-```
-
-Fix sentinel values before summary and imputation. Remove near-zero-variance columns as they provide no information to most models.
-
-**6 — Transformations**
-
-```{r}
-# Example: log1p transforms for monetary columns
-skew_candidates <- c("AMT_INCOME_TOTAL", "AMT_CREDIT", "AMT_ANNUITY")
-present_skew <- intersect(skew_candidates, names(train))
-train <- train |> mutate(across(all_of(present_skew), ~ if_else(.x <= 0 | is.na(.x), NA_real_, log1p(.x)), .names = "log_{col}"))
-```
-
-Decide encoding and scaling strategies by the chosen modeling family (tree models often need less scaling; linear models benefit from standardized numeric inputs).
-
-**7 — Aggregating transactional datasets**
-
-```{r}
-safe_read <- function(fname) {
-	path <- file.path(data_dir, fname)
-	if (file.exists(path)) read_csv(path, show_col_types = FALSE) else tibble()
-}
-
-previous_application <- safe_read("previous_application.csv")
-installments_payments <- safe_read("installments_payments.csv")
-credit_card_balance <- safe_read("credit_card_balance.csv")
-pos_cash_balance <- safe_read("POS_CASH_balance.csv")
-bureau <- safe_read("bureau.csv")
-bureau_balance <- safe_read("bureau_balance.csv")
-
-# Example aggregation: previous_application
-if (nrow(previous_application) > 0) {
-	prev_agg <- previous_application |>
-		group_by(SK_ID_CURR) |>
-		summarise(
-			n_prev_app = n(),
-			n_prev_approved = sum(NAME_CONTRACT_STATUS == "Approved", na.rm = TRUE),
-			pct_approved = n_prev_approved / n_prev_app,
-			prev_app_amt_mean = mean(APPLICATION_CREDIT_AMOUNT, na.rm = TRUE),
-			prev_app_amt_max  = max(APPLICATION_CREDIT_AMOUNT, na.rm = TRUE)
-		)
-}
-
-# Example aggregation: installments_payments
-if (nrow(installments_payments) > 0) {
-	inst_agg <- installments_payments |>
-		group_by(SK_ID_CURR) |>
-		summarise(
-			n_installments = n(),
-			total_paid = sum(AMT_PAYMENT, na.rm = TRUE),
-			avg_delay = mean(DAYS_ENTRY_PAYMENT - DAYS_INSTALMENT, na.rm = TRUE)
-		)
-}
-
-# Join aggregates to train
-train_joined <- train
-if (exists("prev_agg")) train_joined <- train_joined |> left_join(prev_agg, by = "SK_ID_CURR")
-if (exists("inst_agg")) train_joined <- train_joined |> left_join(inst_agg, by = "SK_ID_CURR")
-
-train_joined |> select(SK_ID_CURR, TARGET, starts_with("n_"), starts_with("pct_"), starts_with("prev_"), starts_with("total_")) |> slice_head(n = 10)
-```
-
-**8 — Quick checks on joined features**
-
-```{r}
-joined_num <- train_joined |> select(where(is.numeric)) |> select(-SK_ID_CURR)
-
-joined_smd <- joined_num |> names() |> keep(~ .x != "TARGET") |> map_dfr(function(col) {
-	vals <- train_joined[[col]]
-	tibble(variable = col, smd = (mean(vals[train_joined$TARGET == 1], na.rm = TRUE) - mean(vals[train_joined$TARGET == 0], na.rm = TRUE)) / sd(vals, na.rm = TRUE))
-}) |> arrange(desc(abs(smd)))
-
-joined_smd |> slice_head(n = 20)
-```
-
-**9 — Next steps checklist**
-
-- Finalize missingness thresholds and imputation plan.
-- Build a reproducible script to create aggregated features and save them.
-- Train baseline models (logistic regression, random forest) using a small curated feature set and evaluate with cross-validation and AUC/PR metrics.
-- Use class-weighting, resampling, or threshold tuning if class imbalance harms predictive performance.
-
-This template is intentionally modular. Modify the aggregation logic, variables of interest, and plotting to fit domain-specific hypotheses.
-
-```
-
-
