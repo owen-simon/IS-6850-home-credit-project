@@ -213,8 +213,6 @@ gt(missing_summary) |>
 
 47 variables included in the missing data summary share a common description: "Normalized information about building where the client lives, What is average (_AVG suffix), modus (_MODE suffix), median (_MEDI suffix) apartment size, common area, living area, age of building, number of elevators, number of entrances, state of the building, number of floor." For these building-level characteristics, NULL values can reasonably be interpreted as the feature being absent or not applicable. For example, a null value for `BASEMENTAREA_AVG` likely indicates that the residence does not have a basement.
 
-Other variables included in this list such as `OWN_CAR_AGE` which indcates the age of the client's car could be NULL because the client doesn't own a car. However, variables such as `OCCUPATION_TYPE` do not indicate 
-
 ```{r}
 building_level_variables <- c(
   # AVG
@@ -235,15 +233,9 @@ building_level_variables <- c(
   "FLOORSMAX_MEDI", "FLOORSMIN_MEDI", "LANDAREA_MEDI", "LIVINGAPARTMENTS_MEDI",
   "LIVINGAREA_MEDI", "NONLIVINGAPARTMENTS_MEDI", "NONLIVINGAREA_MEDI"
 )
-```
 
-```{r}
-missing_summary <- combined |>
-  select(
-    -TARGET,
-    -SK_ID_CURR,
-    -all_of(building_level_variables)
-  ) |>
+missing_summary_2 <- combined |>
+  select(-TARGET, -SK_ID_CURR, -building_level_variables) |>  # exclude TARGET, ID and building-level variables
   summarize_all(~ sum(is.na(.))) |>
   pivot_longer(
     cols = everything(),
@@ -254,11 +246,14 @@ missing_summary <- combined |>
   mutate(Proportion = round(Count / nrow(combined), 4)) |>
   arrange(desc(Count))
 
-gt(missing_summary) |>
+gt(missing_summary_2) |>
   tab_header(
     title = "Missing Data Summary",
-    subtitle = "Excluding Building-Level Variables"
   )
 ```
 
-Other variables included in this list such as `OWN_CAR_AGE` which indcates the age of the client's car could be NULL because the client doesn't own a car. 
+Other variables in the summary, such as `OWN_CAR_AGE` (which indicates the age of the client's car), may be NULL because the client does not own a car.
+
+For variables where NULL represents genuinely missing information rather than the absence of a feature, missing values should be imputed—using the median for numeric variables and the most frequent value (mode) for categorical variables.
+
+In general, variables with substantial missingness might be considered for removal. However, `EXT_SOURCE_1` is highly predictive of the target variable, so rather than removing it, missing values should be imputed.
