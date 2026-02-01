@@ -1,4 +1,3 @@
-
 ---
 title: "Exploratory Data Analysis"
 author: "Owen Simon"
@@ -16,9 +15,19 @@ execute:
   message: false
 ---
 
-# Buisness Problem
+# Introduction
+
+## Business Problem
 
 Many potential borrowers lack sufficient credit histories, making it difficult for Home Credit to accurately assess their creditworthiness. This creates a challenge in extending loans to unbanked individuals while managing default risk. To continue expanding financial inclusion responsibly, Home Credit must rely on alternative data to assess repayment risk for these applicants.
+
+## EDA Objective
+
+The goal of this exploratory data analysis (EDA) is to develop an initial understanding of the applicant data used by Home Credit, with a focus on identifying patterns, relationships, and data quality issues that may influence loan default risk. Specifically, this analysis examines the distribution of key applicant characteristics, explores relationships between predictor variables and the `TARGET` outcome (yes/no loan default), and highlight potential challenges such as missing values, class imbalance, and outliers. Insights from this EDA will inform feature selection, data preprocessing, and modeling decisions aimed at improving credit risk assessment for applicants with limited or no traditional credit history.
+
+# Data Exploration
+
+## Setup
 
 ```{r}
 # Load libraries
@@ -34,39 +43,50 @@ train <- read_csv(file.path(data_dir, "application_train.csv"))
 test  <- read_csv(file.path(data_dir, "application_test.csv"))
 ```
 
-# 1 - Majority Class Analysis
+## 1 - Majority Class Analysis
 
 ```{r}
 target_proportion <- train |>
   count(TARGET) |>
   mutate(Proportion = round(n / sum(n), 4)) |>
-  rename(
-    Default = TARGET,
-    Count = n
-  )
+  rename(Default = TARGET,
+         Count = n)
 
 gt(target_proportion)
 ```
 
 A majority-class model that always predicts non-default would achieve an accuracy of approximately 92%.
 
-# 2 - Correlation Analysis
+## 2 - Correlation Analysis
 
-## 2.1 - Numeric Variables
+```{r}
+# Count types of all variables except TARGET and SK_ID_CURR
+var_types <- train |>
+  select(-TARGET, -SK_ID_CURR) |>
+  summarise(across(everything(), ~ class(.))) |>
+  pivot_longer(everything(), names_to = "Variable", values_to = "Data_Type") |>
+  count(Data_Type, name = "Count")
+
+gt(var_types)
+```
+
+Of the 120 variables in the training dataset (excluding `TARGET` and `SK_ID_CURR`), 105 are numeric and 16 are categorical.
+
+### 2.1 - Numeric Variables
 
 ```{r}
 # Select Numeric Variables
 numeric_vars <- train |> select(where(is.numeric)) |>
-	select(-TARGET) |> 
+	select(-TARGET, -SK_ID_CURR) |> 
 	names()
 
 # Calculate Correlation with Target
 numeric_summary <- lapply(numeric_vars, function(x) {
   data.frame(
     Predictor = x,
-    Correlation_with_Target = cor(train[[x]], train$TARGET, use = "complete.obs")
-  )
-}) |> bind_rows()
+    Correlation_with_Target = round(cor(train[[x]], train$TARGET, use = "complete.obs"), 4))
+    }) |> 
+  bind_rows()
 
 # Rank by absolute correlation
 numeric_summary <- numeric_summary |> 
@@ -75,41 +95,87 @@ numeric_summary <- numeric_summary |>
 gt(numeric_summary)
 ```
 
-## 2.2 - Categorical Variables
+The numeric variables with the highest correlation to the target variable are `EXT_SOURCE_3`, `EXT_SOURCE_2`, and `EXT_SOURCE_1`, which are all normalized scores from external data sources.
 
 ```{r}
-# Convert character columns to factors
-train_factored <- train |>
-  mutate(across(where(is.character), as.factor))
+# Prepare data for plotting
+plot_data <- train |>
+  select(TARGET, EXT_SOURCE_1, EXT_SOURCE_2, EXT_SOURCE_3) |>
+  pivot_longer(
+    cols = starts_with("EXT_SOURCE"),
+    names_to = "Source",
+    values_to = "Value"
+  )
 
-categorical_vars <- train_factored |> select(where(is.factor)) |> names()
+# Boxplot with fixed y-axis
+ggplot(plot_data, aes(x = factor(TARGET), y = Value)) +
+  geom_boxplot() +
+  facet_wrap(~ Source, scales = "fixed") +  # fixed y-axis across facets
+  labs(
+    x = "Default (TARGET)",
+    y = "EXT_SOURCE Value",
+    title = "EXT_SOURCE Variables by Loan Default Status"
+  ) +
+  theme_minimal()
+```
 
-categorical_summary <- lapply(categorical_vars, function(var) {
-  # calculate max proportion difference between target classes for each category
-  prop_diff <- train_factored |>
-    group_by(.data[[var]], TARGET) |>
-    summarise(n = n(), .groups = "drop") |>
-    pivot_wider(names_from = TARGET, values_from = n, values_fill = 0) |>
-    mutate(
-      Total = `0` + `1`,
-      Proportion_0 = `0` / Total,
-      Proportion_1 = `1` / Total,
-      Difference = abs(Proportion_1 - Proportion_0)
+Across all three `EXT_SOURCE` variables, non-defaulted applicants (`TARGET` = 0) exhibit higher median values and overall distributions compared to defaulted applicants (`TARGET` = 1). This consistent separation suggests a negative association between EXT_SOURCE scores and loan default risk, indicating that higher external risk scores are associated with lower likelihood of default.
+
+### 2.2 - Categorical Variables
+
+```{r}
+# Select categorical variables
+categorical_vars <- train |>
+  select(-TARGET, -SK_ID_CURR) |>
+  select(where(is.character)) |>
+  names()
+
+# Summarize categorical variables
+cat_summary <- lapply(categorical_vars, function(x) {
+  temp <- train |>
+    group_by(.data[[x]]) |>
+    summarise(
+      Default_Rate = mean(TARGET, na.rm = TRUE),
+      .groups = "drop"
     )
   
-  # return a data frame with max difference for this variable
   data.frame(
-    Predictor = var,
-    Max_Proportion_Diff = max(prop_diff$Difference, na.rm = TRUE)
+    Predictor = x,
+    Max_Proportion_Diff = max(temp$Default_Rate) - min(temp$Default_Rate)
   )
-}) |> bind_rows()
+}) |>
+  bind_rows() |>
+  arrange(desc(Max_Proportion_Diff))
 
-# Rank by largest difference
-categorical_summary <- categorical_summary |> 
-    arrange(desc(Max_Proportion_Diff))
-
-gt(categorical_summary)
+gt(cat_summary)
 ```
+
+`NAME_INCOME_TYPE` shows the strongest separation in default rates across its categories, suggesting it may be the most informative categorical predictor.
+
+```{r}
+plot_data <- train |>
+  group_by(NAME_INCOME_TYPE) |>
+  summarise(
+    Default_Rate = mean(TARGET, na.rm = TRUE),
+    Count = n(),
+    .groups = "drop"
+  )
+
+# Bar chart of default rate
+ggplot(plot_data, aes(x = reorder(NAME_INCOME_TYPE, Default_Rate), y = Default_Rate)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = scales::percent(Default_Rate, accuracy = 1)), 
+            vjust = -0.38) +
+  labs(title = "Default Rate by Income Type",
+       x = "Income Type",
+       y = "Default Rate") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Default rate is highest amongst "Unemployed" and "Maternity Leave" income types at 40% and 36% respectively, while "Student" and "Businessman" have default rates of 0%.
+
+## 3 - Missing Data
 
 ```{r}
 # Add a placeholder SalePrice to test
@@ -118,7 +184,7 @@ test <- test |>
 
 # Combine train and test
 combined <- bind_rows(
-  train |> mutate(dataset = "train"),
+  train |>mutate(dataset = "train"),
   test  |> mutate(dataset = "test")
 )
 ```
@@ -128,11 +194,19 @@ combined <- bind_rows(
 count_missings <- function(x) sum(is.na(x))
 
 missing_summary <- combined |>
-  summarize_all(count_missings) |>
-  pivot_longer(cols = everything(),
-               names_to = "column",
-               values_to = "missing") |>
-  filter(missing > 0)
+  select(-TARGET, -SK_ID_CURR) |>  # exclude TARGET and ID
+  summarize_all(~ sum(is.na(.))) |>
+  pivot_longer(
+    cols = everything(),
+    names_to = "Variable",
+    values_to = "Count"
+  ) |>
+  filter(Count > 0) |>
+  mutate(Proportion = round(Count / nrow(combined), 4)) |>
+  arrange(desc(Count))
 
-gt(missing_summary)
+gt(missing_summary) |>
+  tab_header(
+    title = "Missing Data Summary",
+  )
 ```
