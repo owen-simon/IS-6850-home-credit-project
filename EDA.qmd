@@ -41,6 +41,7 @@ data_dir <- "data-files"
 # Read primary datasets
 train <- read_csv(file.path(data_dir, "application_train.csv"))
 test  <- read_csv(file.path(data_dir, "application_test.csv"))
+dict <- read_csv(file.path(data_dir, "HomeCredit_columns_description.csv"))
 ```
 
 ## 1 - Majority Class Analysis
@@ -189,6 +190,8 @@ combined <- bind_rows(
 )
 ```
 
+Before examining missing values, the training and test datasets were combined into a single dataset. A placeholder TARGET column was added to the test set, and a dataset indicator was created to track the origin of each row. This setup ensures that missing value analysis can be performed consistently across both datasets.
+
 ```{r}
 #count NAs
 count_missings <- function(x) sum(is.na(x))
@@ -211,28 +214,13 @@ gt(missing_summary) |>
   )
 ```
 
-47 variables included in the missing data summary share a common description: "Normalized information about building where the client lives, What is average (_AVG suffix), modus (_MODE suffix), median (_MEDI suffix) apartment size, common area, living area, age of building, number of elevators, number of entrances, state of the building, number of floor." For these building-level characteristics, NULL values can reasonably be interpreted as the feature being absent or not applicable. For example, a null value for `BASEMENTAREA_AVG` likely indicates that the residence does not have a basement.
+47 variables included in the missing data summary share a common description: "Normalized information about building where the client lives, What is average (\_AVG suffix), modus (\_MODE suffix), median (\_MEDI suffix) apartment size, common area, living area, age of building, number of elevators, number of entrances, state of the building, number of floor." For these characteristics, NULL values can reasonably be interpreted as the feature being absent or not applicable. For example, a NULL in BASEMENTAREA_AVG likely indicates that the residence does not have a basement. Because the variables are normalized on a 0–1 scale, replacing NULLs with 0 is both intuitive and semantically meaningful: 0 effectively encodes “feature not present,” preserving the interpretation of the normalized score without introducing artificial averages.
 
 ```{r}
-building_level_variables <- c(
-  # AVG
-  "APARTMENTS_AVG", "BASEMENTAREA_AVG", "YEARS_BEGINEXPLUATATION_AVG",
-  "YEARS_BUILD_AVG", "COMMONAREA_AVG", "ELEVATORS_AVG", "ENTRANCES_AVG",
-  "FLOORSMAX_AVG", "FLOORSMIN_AVG", "LANDAREA_AVG", "LIVINGAPARTMENTS_AVG",
-  "LIVINGAREA_AVG", "NONLIVINGAPARTMENTS_AVG", "NONLIVINGAREA_AVG",
-  # MODE
-  "APARTMENTS_MODE", "BASEMENTAREA_MODE", "YEARS_BEGINEXPLUATATION_MODE",
-  "YEARS_BUILD_MODE", "COMMONAREA_MODE", "ELEVATORS_MODE", "ENTRANCES_MODE",
-  "FLOORSMAX_MODE", "FLOORSMIN_MODE", "LANDAREA_MODE", "LIVINGAPARTMENTS_MODE",
-  "LIVINGAREA_MODE", "NONLIVINGAPARTMENTS_MODE", "NONLIVINGAREA_MODE",
-  "FONDKAPREMONT_MODE", "HOUSETYPE_MODE", "TOTALAREA_MODE",
-  "WALLSMATERIAL_MODE", "EMERGENCYSTATE_MODE",
-  # MEDI
-  "APARTMENTS_MEDI", "BASEMENTAREA_MEDI", "YEARS_BEGINEXPLUATATION_MEDI",
-  "YEARS_BUILD_MEDI", "COMMONAREA_MEDI", "ELEVATORS_MEDI", "ENTRANCES_MEDI",
-  "FLOORSMAX_MEDI", "FLOORSMIN_MEDI", "LANDAREA_MEDI", "LIVINGAPARTMENTS_MEDI",
-  "LIVINGAREA_MEDI", "NONLIVINGAPARTMENTS_MEDI", "NONLIVINGAREA_MEDI"
-)
+building_level_variables <- dict |>
+  filter(Table == "application_{train|test}.csv",
+         Description == "Normalized information about building where the client lives, What is average (_AVG suffix), modus (_MODE suffix), median (_MEDI suffix) apartment size, common area, living area, age of building, number of elevators, number of entrances, state of the building, number of floor") |>
+  pull(Row)
 
 missing_summary_2 <- combined |>
   select(-TARGET, -SK_ID_CURR, -building_level_variables) |>  # exclude TARGET, ID and building-level variables
@@ -252,8 +240,92 @@ gt(missing_summary_2) |>
   )
 ```
 
-Other variables in the summary, such as `OWN_CAR_AGE` (which indicates the age of the client's car), may be NULL because the client does not own a car.
+Other variables in the summary, such as `OWN_CAR_AGE` (which indicates the age of the client's car), may be NULL because the client does not own a car. In such cases, NULL values should be replaced with 0.
 
-For variables where NULL represents genuinely missing information rather than the absence of a feature, missing values should be imputed—using the median for numeric variables and the most frequent value (mode) for categorical variables.
+For variables where NULL represents genuinely missing information rather than the absence of a feature, missing values should be imputed to avoid losing information. Numeric variables should be imputed using the median, while categorical variables should use the most frequent value (mode).
 
-In general, variables with substantial missingness might be considered for removal. However, `EXT_SOURCE_1` is highly predictive of the target variable, so rather than removing it, missing values should be imputed.
+Variables with substantial missingness may be candidates for removal; however, some variables, such as `EXT_SOURCE_1`, are highly predictive of the target. In these cases, imputing missing values is preferable to dropping the variable, preserving its predictive value in modeling.
+
+## - 4 Data Problems
+
+### Normalized Variables
+
+```{r}
+# Select variables marked as normalized in the data dictionary
+normalized_tag <- dict |>
+  filter(Table == "application_{train|test}.csv",
+         Special == "normalized") |>
+  pull(Row)
+
+# Subset train
+normalized <- train |> select(all_of(normalized_tag))
+
+# Check data types
+var_types <- sapply(normalized, class)
+var_types
+```
+
+Most variables labeled as “normalized” in the data dictionary are numeric and can be interpreted on a 0–1 scale. However, four of the 47 building-level variables—FONDKAPREMONT_MODE, HOUSETYPE_MODE, WALLSMATERIAL_MODE, and EMERGENCYSTATE_MODE—are actually categorical (character) variables, not numeric. These variables are therefore incorrectly labeled as “normalized.”
+
+Previously, it was suggested that all building-level variables have their NULLs imputed with 0. For these four categorical variables, however, imputing NULLs with 0 is inappropriate and would misrepresent the data. Missing values should instead be handled using mode imputation or other categorical encoding strategies to preserve their meaning.
+
+```{r}
+# Update Normalized Variables
+normalized <- normalized |>
+  select(-FONDKAPREMONT_MODE, 
+         -HOUSETYPE_MODE, 
+         -WALLSMATERIAL_MODE, 
+         -EMERGENCYSTATE_MODE)
+
+summary(normalized)
+```
+
+After excluding the four incorrectly labeled categorical variables, all remaining variables tagged as “normalized” are numeric and have observed values bounded between 0 and 1. This confirms that these variables are consistently scaled and that their normalization aligns with the data dictionary’s description.
+
+### Numeric Variables
+
+```{r}
+# check all numeric variables (exclude normalized since they have been checked)
+numeric_error_check <- train |>
+  select(
+    where(is.numeric),
+    -TARGET,
+    -SK_ID_CURR,
+    -all_of(names(normalized))
+  )
+
+summary(numeric_error_check)
+```
+
+Outliers and extreme values:
+
+-   CNT_CHILDREN has a maximum of 19, which is unusually high.
+
+-   AMT_INCOME_TOTAL reaches 117,000,000, far above the 3rd quartile of 202,500.
+
+-   AMT_ANNUITY and AMT_CREDIT show similar extreme high values compared to their medians.
+
+-   DAYS_EMPLOYED contains a positive maximum (365,243), likely a placeholder for missing values.
+
+Unusual distributions:
+
+-   CNT_FAM_MEMBERS has a maximum of 20, which may indicate data errors or extended household counts.
+
+-   Social circle observation variables (OBS_30_CNT_SOCIAL_CIRCLE, OBS_60_CNT_SOCIAL_CIRCLE) have extreme max values (e.g., 348), suggesting outliers.
+
+-   Most FLAG_DOCUMENT\_\* variables are heavily skewed toward 0, indicating rare document submissions.
+
+Expected conventions:
+
+DAYS_BIRTH and other day-based variables are negative, representing days before the loan application.
+
+### Categorical
+
+```{r}
+# Unique levels per categorical variable
+cat_levels <- lapply(categorical_vars, function(x){
+  train |>
+    select(.data[[x]]) %>% distinct()})
+
+cat_levels[["CODE_GENDER"]]
+```
