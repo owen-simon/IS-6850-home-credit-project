@@ -16,7 +16,7 @@ pos_cash <- read_csv(file.path(data_dir, "POS_CASH_balance.csv"))
 bureau <- read_csv(file.path(data_dir, "bureau.csv"))
 bureau_balance <- read_csv(file.path(data_dir, "bureau_balance.csv"))
 cred_card <- read_csv(file.path(data_dir, "credit_card_balance.csv"))
-install <- read_csv(file.path(data_dir, "installments_payments.csv"))
+installments <- read_csv(file.path(data_dir, "installments_payments.csv"))
 prev_app <- read_csv(file.path(data_dir, "previous_application.csv"))
 
 # ================================
@@ -290,7 +290,7 @@ prev_app_client <- prev_app |>
       mean(FLAG_LAST_APPL_PER_CONTRACT == "Y", na.rm = TRUE)
 
 ,
-    prev_NFLAG_LAST_APPL_IN_DAY_rate      = mean(NFLAG_LAST_APPL_IN_DAY, na.rm = TRUE),
+    prev_NFLAG_LAST_APPL_IN_DAY_rate = mean(NFLAG_LAST_APPL_IN_DAY, na.rm = TRUE),
     
     # Application outcome
     prev_APPROVED_rate = mean(NAME_CONTRACT_STATUS == "Approved", na.rm = TRUE),
@@ -311,7 +311,7 @@ prev_app_client <- prev_app |>
 #
 # Result: one row per previous loan, ready for client-level aggregation
 # ============================================================================
-install_prev_features <- install |>
+install_prev_features <- installments |>
   mutate(
     inst_delay = DAYS_ENTRY_PAYMENT - DAYS_INSTALMENT
   ) |>
@@ -389,6 +389,15 @@ test_aug  <- augment_application(test)
 # Data Manipulation
 # ===================
 
+# Combine Training and Test Data Sets
+test_aug <- test_aug |> 
+  mutate(TARGET = NA)
+
+combined <- bind_rows(
+  train_aug |> mutate(dataset = "train"),
+  test_aug  |> mutate(dataset = "test")
+)
+
 # Identify normalized building-level variables except the 4 categorical exceptions
 normalized_building_vars <- dict |>
   filter(Table == "application_{train|test}.csv",
@@ -449,6 +458,17 @@ combined <- combined |>
     AGE = abs(DAYS_BIRTH) / 365,
     DAYS_REGISTRATION = abs(DAYS_REGISTRATION),
     DAYS_ID_PUBLISH = abs(DAYS_ID_PUBLISH))
+
+# ===================================
+# Split Training and Test Data Sets
+# ===================================
+train_aug <- combined |> 
+  filter(dataset == "train") |> 
+  select(-dataset)
+
+test_aug <- combined |> 
+  filter(dataset == "test") |> 
+  select(-dataset, -TARGET)
 
 # =========================
 # Write Final Data Sets
