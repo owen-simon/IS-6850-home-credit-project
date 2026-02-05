@@ -58,7 +58,7 @@ gt(target_proportion)
 
 A majority-class model that always predicts non-default would achieve an accuracy of approximately 92%.
 
-## 2 - Correlation Analysis
+## 2 - Correlation Analysis 
 
 ```{r}
 # Count types of all variables except TARGET and SK_ID_CURR
@@ -295,7 +295,7 @@ ggplot(train, aes(x = DAYS_EMPLOYED)) +
   theme_minimal()
 ```
 
-For modeling, `DAYS_EMPLOYED` can be transformed so that 0 represents unemployment, with all other values converted to positive durations using the absolute value. This makes the variable easier to interpret, as it no longer measures time relative to the loan application. Other `DAYS_` variables could benefit from similar transformations; for example, DAYS_BIRTH can be converted into years by taking the absolute value and dividing by 365 to create an `AGE` variable.
+For modeling, `DAYS_EMPLOYED` can be transformed so that 0 represents unemployment, with all other values converted to positive durations using the absolute value. This makes the variable easier to interpret, as it no longer measures time relative to the loan application. Other `DAYS_` variables could benefit from similar transformations; for example, `DAYS_BIRTH` can be converted into years by taking the absolute value and dividing by 365 to create an `AGE` variable.
 
 ### 4.3 - Categorical
 
