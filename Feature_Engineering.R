@@ -22,8 +22,21 @@ prev_app <- read_csv(file.path(data_dir, "previous_application.csv"))
 # ================================
 # Safe min / max / sum functions
 # ================================
-safe_max <- function(x) if (all(is.na(x))) NA_real_ else max(x, na.rm = TRUE)
-safe_min <- function(x) if (all(is.na(x))) NA_real_ else min(x, na.rm = TRUE)
+safe_mean <- function(x, ...) {
+  if (all(is.na(x))) NA_real_ else mean(x, na.rm = TRUE)
+}
+
+safe_sum <- function(x, ...) {
+  if (all(is.na(x))) NA_real_ else sum(x, na.rm = TRUE)
+}
+
+safe_min <- function(x, ...) {
+  if (all(is.na(x))) NA_real_ else min(x, na.rm = TRUE)
+}
+
+safe_max <- function(x, ...) {
+  if (all(is.na(x))) NA_real_ else max(x, na.rm = TRUE)
+}
 
 # =============================================================================================
 # POS_CASH_balance: Aggregate monthly loan data to loan-level first
@@ -43,19 +56,19 @@ pos_prev_features <- pos_cash |>
     pos_MONTHS_BALANCE_count = n(),
     pos_MONTHS_BALANCE_min   = safe_min(MONTHS_BALANCE),
     
-    pos_CNT_INSTALMENT_mean = mean(CNT_INSTALMENT, na.rm = TRUE),
+    pos_CNT_INSTALMENT_mean = safe_mean(CNT_INSTALMENT, na.rm = TRUE),
     pos_CNT_INSTALMENT_max  = safe_max(CNT_INSTALMENT),
     
-    pos_CNT_INSTALMENT_FUTURE_mean = mean(CNT_INSTALMENT_FUTURE, na.rm = TRUE),
+    pos_CNT_INSTALMENT_FUTURE_mean = safe_mean(CNT_INSTALMENT_FUTURE, na.rm = TRUE),
     pos_CNT_INSTALMENT_FUTURE_min  = safe_min(CNT_INSTALMENT_FUTURE),
     
-    pos_SK_DPD_mean = mean(SK_DPD, na.rm = TRUE),
+    pos_SK_DPD_mean = safe_mean(SK_DPD, na.rm = TRUE),
     pos_SK_DPD_max  = safe_max(SK_DPD),
-    pos_SK_DPD_sum  = sum(SK_DPD, na.rm = TRUE),
+    pos_SK_DPD_sum  = safe_sum(SK_DPD, na.rm = TRUE),
     
-    pos_SK_DPD_DEF_mean = mean(SK_DPD_DEF, na.rm = TRUE),
+    pos_SK_DPD_DEF_mean = safe_mean(SK_DPD_DEF, na.rm = TRUE),
     pos_SK_DPD_DEF_max  = safe_max(SK_DPD_DEF),
-    pos_SK_DPD_DEF_sum  = sum(SK_DPD_DEF, na.rm = TRUE),
+    pos_SK_DPD_DEF_sum  = safe_sum(SK_DPD_DEF, na.rm = TRUE),
     
     .groups = "drop"
   ) |>
@@ -80,22 +93,22 @@ pos_cash_client <- pos_prev_features |>
   summarise(
     COUNT_POS_LOANS = n(),
     
-    pos_CNT_INSTALMENT_mean = mean(pos_CNT_INSTALMENT_mean, na.rm = TRUE),
+    pos_CNT_INSTALMENT_mean = safe_mean(pos_CNT_INSTALMENT_mean, na.rm = TRUE),
     pos_CNT_INSTALMENT_max  = safe_max(pos_CNT_INSTALMENT_max),
     
-    pos_CNT_INSTALMENT_FUTURE_mean = mean(pos_CNT_INSTALMENT_FUTURE_mean, na.rm = TRUE),
+    pos_CNT_INSTALMENT_FUTURE_mean = safe_mean(pos_CNT_INSTALMENT_FUTURE_mean, na.rm = TRUE),
     pos_CNT_INSTALMENT_FUTURE_min  = safe_min(pos_CNT_INSTALMENT_FUTURE_min),
     
-    pos_SK_DPD_mean = mean(pos_SK_DPD_mean, na.rm = TRUE),
+    pos_SK_DPD_mean = safe_mean(pos_SK_DPD_mean, na.rm = TRUE),
     pos_SK_DPD_max  = safe_max(pos_SK_DPD_max),
-    pos_SK_DPD_sum  = sum(pos_SK_DPD_sum, na.rm = TRUE),
+    pos_SK_DPD_sum  = safe_sum(pos_SK_DPD_sum, na.rm = TRUE),
     
-    pos_SK_DPD_DEF_mean = mean(pos_SK_DPD_DEF_mean, na.rm = TRUE),
+    pos_SK_DPD_DEF_mean = safe_mean(pos_SK_DPD_DEF_mean, na.rm = TRUE),
     pos_SK_DPD_DEF_max  = safe_max(pos_SK_DPD_DEF_max),
-    pos_SK_DPD_DEF_sum  = sum(pos_SK_DPD_DEF_sum, na.rm = TRUE),
+    pos_SK_DPD_DEF_sum  = safe_sum(pos_SK_DPD_DEF_sum, na.rm = TRUE),
     
-    pos_SK_DPD_ever_rate     = mean(pos_SK_DPD_ever, na.rm = TRUE),
-    pos_SK_DPD_DEF_ever_rate = mean(pos_SK_DPD_DEF_ever, na.rm = TRUE),
+    pos_SK_DPD_ever_rate     = safe_mean(pos_SK_DPD_ever, na.rm = TRUE),
+    pos_SK_DPD_DEF_ever_rate = safe_mean(pos_SK_DPD_DEF_ever, na.rm = TRUE),
     
     .groups = "drop"
   )
@@ -151,17 +164,22 @@ bureau_client <- bureau |>
   summarise(
     COUNT_BUREAU_RECORDS     = n(),
     
-    bureau_AMT_CREDIT_SUM_mean  = mean(AMT_CREDIT_SUM, na.rm = TRUE),
+    bureau_AMT_CREDIT_SUM_mean  = safe_mean(AMT_CREDIT_SUM, na.rm = TRUE),
     bureau_AMT_CREDIT_SUM_max   = safe_max(AMT_CREDIT_SUM),
-    bureau_AMT_CREDIT_SUM_debt  = sum(AMT_CREDIT_SUM_DEBT, na.rm = TRUE),
+    bureau_AMT_CREDIT_SUM_debt  = safe_sum(AMT_CREDIT_SUM_DEBT, na.rm = TRUE),
     
-    bureau_days_credit_mean     = mean(DAYS_CREDIT, na.rm = TRUE),
+    bureau_days_credit_mean     = safe_mean(DAYS_CREDIT, na.rm = TRUE),
     bureau_days_credit_end_max  = safe_max(DAYS_CREDIT_ENDDATE),
     
     bureau_ever_overdue_rate = ifelse(all(is.na(bb_ever_overdue)), NA_real_,
-         mean(bb_ever_overdue, na.rm = TRUE)),
+         safe_mean(bb_ever_overdue, na.rm = TRUE)),
     
     .groups = "drop"
+   ) |>
+  mutate(
+    bureau_DEBT_RATIO =
+      bureau_AMT_CREDIT_SUM_debt /
+      (bureau_AMT_CREDIT_SUM_mean + 1)
   )
 
 # ============================================================================
@@ -183,26 +201,26 @@ cc_prev_features <- cred_card |>
     cc_MONTHS_BALANCE_count = n(),
     cc_MONTHS_BALANCE_min   = safe_min(MONTHS_BALANCE),
     
-    cc_AMT_BALANCE_mean     = mean(AMT_BALANCE, na.rm = TRUE),
+    cc_AMT_BALANCE_mean     = safe_mean(AMT_BALANCE, na.rm = TRUE),
     cc_AMT_BALANCE_max      = safe_max(AMT_BALANCE),
-    cc_AMT_BALANCE_sum      = sum(AMT_BALANCE, na.rm = TRUE),
+    cc_AMT_BALANCE_sum      = safe_sum(AMT_BALANCE, na.rm = TRUE),
     
-    cc_AMT_CREDIT_LIMIT_ACTUAL_mean = mean(AMT_CREDIT_LIMIT_ACTUAL, na.rm = TRUE),
+    cc_AMT_CREDIT_LIMIT_ACTUAL_mean = safe_mean(AMT_CREDIT_LIMIT_ACTUAL, na.rm = TRUE),
     cc_AMT_CREDIT_LIMIT_ACTUAL_max  = safe_max(AMT_CREDIT_LIMIT_ACTUAL),
     
-    cc_AMT_PAYMENT_CURRENT_sum  = sum(AMT_PAYMENT_CURRENT, na.rm = TRUE),
-    cc_AMT_PAYMENT_TOTAL_CURRENT_sum = sum(AMT_PAYMENT_TOTAL_CURRENT, na.rm = TRUE),
+    cc_AMT_PAYMENT_CURRENT_sum  = safe_sum(AMT_PAYMENT_CURRENT, na.rm = TRUE),
+    cc_AMT_PAYMENT_TOTAL_CURRENT_sum = safe_sum(AMT_PAYMENT_TOTAL_CURRENT, na.rm = TRUE),
     
-    cc_CNT_DRAWINGS_CURRENT_sum = sum(CNT_DRAWINGS_CURRENT, na.rm = TRUE),
+    cc_CNT_DRAWINGS_CURRENT_sum = safe_sum(CNT_DRAWINGS_CURRENT, na.rm = TRUE),
     cc_CNT_INSTALMENT_MATURE_CUM = safe_max(CNT_INSTALMENT_MATURE_CUM),
     
-    cc_SK_DPD_mean     = mean(SK_DPD, na.rm = TRUE),
+    cc_SK_DPD_mean     = safe_mean(SK_DPD, na.rm = TRUE),
     cc_SK_DPD_max      = safe_max(SK_DPD),
-    cc_SK_DPD_sum      = sum(SK_DPD, na.rm = TRUE),
+    cc_SK_DPD_sum      = safe_sum(SK_DPD, na.rm = TRUE),
     
-    cc_SK_DPD_DEF_mean = mean(SK_DPD_DEF, na.rm = TRUE),
+    cc_SK_DPD_DEF_mean = safe_mean(SK_DPD_DEF, na.rm = TRUE),
     cc_SK_DPD_DEF_max  = safe_max(SK_DPD_DEF),
-    cc_SK_DPD_DEF_sum  = sum(SK_DPD_DEF, na.rm = TRUE),
+    cc_SK_DPD_DEF_sum  = safe_sum(SK_DPD_DEF, na.rm = TRUE),
     
     .groups = "drop"
   ) |>
@@ -227,29 +245,29 @@ credit_card_client <- cc_prev_features |>
   summarise(
     COUNT_CREDIT_CARDS = n(),
     
-    cc_AMT_BALANCE_mean     = mean(cc_AMT_BALANCE_mean, na.rm = TRUE),
+    cc_AMT_BALANCE_mean     = safe_mean(cc_AMT_BALANCE_mean, na.rm = TRUE),
     cc_AMT_BALANCE_max      = safe_max(cc_AMT_BALANCE_max),
-    cc_AMT_BALANCE_sum      = sum(cc_AMT_BALANCE_sum, na.rm = TRUE),
+    cc_AMT_BALANCE_sum      = safe_sum(cc_AMT_BALANCE_sum, na.rm = TRUE),
     
-    cc_AMT_CREDIT_LIMIT_ACTUAL_mean = mean(cc_AMT_CREDIT_LIMIT_ACTUAL_mean, na.rm = TRUE),
+    cc_AMT_CREDIT_LIMIT_ACTUAL_mean = safe_mean(cc_AMT_CREDIT_LIMIT_ACTUAL_mean, na.rm = TRUE),
     cc_AMT_CREDIT_LIMIT_ACTUAL_max  = safe_max(cc_AMT_CREDIT_LIMIT_ACTUAL_max),
     
-    cc_AMT_PAYMENT_CURRENT_sum      = sum(cc_AMT_PAYMENT_CURRENT_sum, na.rm = TRUE),
-    cc_AMT_PAYMENT_TOTAL_CURRENT_sum = sum(cc_AMT_PAYMENT_TOTAL_CURRENT_sum, na.rm = TRUE),
+    cc_AMT_PAYMENT_CURRENT_sum      = safe_sum(cc_AMT_PAYMENT_CURRENT_sum, na.rm = TRUE),
+    cc_AMT_PAYMENT_TOTAL_CURRENT_sum = safe_sum(cc_AMT_PAYMENT_TOTAL_CURRENT_sum, na.rm = TRUE),
     
-    cc_CNT_DRAWINGS_CURRENT_sum     = sum(cc_CNT_DRAWINGS_CURRENT_sum, na.rm = TRUE),
+    cc_CNT_DRAWINGS_CURRENT_sum     = safe_sum(cc_CNT_DRAWINGS_CURRENT_sum, na.rm = TRUE),
     cc_CNT_INSTALMENT_MATURE_CUM    = safe_max(cc_CNT_INSTALMENT_MATURE_CUM),
     
-    cc_SK_DPD_mean     = mean(cc_SK_DPD_mean, na.rm = TRUE),
+    cc_SK_DPD_mean     = safe_mean(cc_SK_DPD_mean, na.rm = TRUE),
     cc_SK_DPD_max      = safe_max(cc_SK_DPD_max),
-    cc_SK_DPD_sum      = sum(cc_SK_DPD_sum, na.rm = TRUE),
+    cc_SK_DPD_sum      = safe_sum(cc_SK_DPD_sum, na.rm = TRUE),
     
-    cc_SK_DPD_DEF_mean = mean(cc_SK_DPD_DEF_mean, na.rm = TRUE),
+    cc_SK_DPD_DEF_mean = safe_mean(cc_SK_DPD_DEF_mean, na.rm = TRUE),
     cc_SK_DPD_DEF_max  = safe_max(cc_SK_DPD_DEF_max),
-    cc_SK_DPD_DEF_sum  = sum(cc_SK_DPD_DEF_sum, na.rm = TRUE),
+    cc_SK_DPD_DEF_sum  = safe_sum(cc_SK_DPD_DEF_sum, na.rm = TRUE),
     
-    cc_SK_DPD_ever_rate     = mean(cc_SK_DPD_ever, na.rm = TRUE),
-    cc_SK_DPD_DEF_ever_rate = mean(cc_SK_DPD_DEF_ever, na.rm = TRUE),
+    cc_SK_DPD_ever_rate     = safe_mean(cc_SK_DPD_ever, na.rm = TRUE),
+    cc_SK_DPD_DEF_ever_rate = safe_mean(cc_SK_DPD_DEF_ever, na.rm = TRUE),
     
     .groups = "drop"
   )
@@ -272,29 +290,29 @@ prev_app_client <- prev_app |>
     COUNT_PREV_APPLICATIONS = n(),
     
     # Amounts requested / approved
-    prev_AMT_APPLICATION_mean = mean(AMT_APPLICATION, na.rm = TRUE),
+    prev_AMT_APPLICATION_mean = safe_mean(AMT_APPLICATION, na.rm = TRUE),
     prev_AMT_APPLICATION_max  = safe_max(AMT_APPLICATION),
-    prev_AMT_CREDIT_mean      = mean(AMT_CREDIT, na.rm = TRUE),
+    prev_AMT_CREDIT_mean      = safe_mean(AMT_CREDIT, na.rm = TRUE),
     prev_AMT_CREDIT_max       = safe_max(AMT_CREDIT),
-    prev_AMT_ANNUITY_mean     = mean(AMT_ANNUITY, na.rm = TRUE),
+    prev_AMT_ANNUITY_mean     = safe_mean(AMT_ANNUITY, na.rm = TRUE),
     prev_AMT_ANNUITY_max      = safe_max(AMT_ANNUITY),
     
     # Days relative to current application
-    prev_DAYS_DECISION_mean     = mean(DAYS_DECISION, na.rm = TRUE),
+    prev_DAYS_DECISION_mean     = safe_mean(DAYS_DECISION, na.rm = TRUE),
     prev_DAYS_FIRST_DRAWING_min = safe_min(DAYS_FIRST_DRAWING),
     prev_DAYS_LAST_DUE_max      = safe_max(DAYS_LAST_DUE),
     prev_DAYS_TERMINATION_max   = safe_max(DAYS_TERMINATION),
     
     # Flags
     prev_FLAG_LAST_APPL_PER_CONTRACT_rate =
-      mean(FLAG_LAST_APPL_PER_CONTRACT == "Y", na.rm = TRUE)
+      safe_mean(FLAG_LAST_APPL_PER_CONTRACT == "Y", na.rm = TRUE),
 
-,
-    prev_NFLAG_LAST_APPL_IN_DAY_rate = mean(NFLAG_LAST_APPL_IN_DAY, na.rm = TRUE),
+    prev_NFLAG_LAST_APPL_IN_DAY_rate =
+      safe_mean(NFLAG_LAST_APPL_IN_DAY, na.rm = TRUE),
     
     # Application outcome
-    prev_APPROVED_rate = mean(NAME_CONTRACT_STATUS == "Approved", na.rm = TRUE),
-    prev_REFUSED_rate  = mean(NAME_CONTRACT_STATUS == "Refused", na.rm = TRUE),
+    prev_APPROVED_rate = safe_mean(NAME_CONTRACT_STATUS == "Approved", na.rm = TRUE),
+    prev_REFUSED_rate  = safe_mean(NAME_CONTRACT_STATUS == "Refused", na.rm = TRUE),
     
     .groups = "drop"
   )
@@ -319,13 +337,13 @@ install_prev_features <- installments |>
   summarise(
     inst_NUM_INSTALMENTS = n(),
     
-    inst_AMT_INSTALMENT_mean = mean(AMT_INSTALMENT, na.rm = TRUE),
-    inst_AMT_INSTALMENT_sum  = sum(AMT_INSTALMENT, na.rm = TRUE),
+    inst_AMT_INSTALMENT_mean = safe_mean(AMT_INSTALMENT, na.rm = TRUE),
+    inst_AMT_INSTALMENT_sum  = safe_sum(AMT_INSTALMENT, na.rm = TRUE),
     
-    inst_AMT_PAYMENT_mean = mean(AMT_PAYMENT, na.rm = TRUE),
-    inst_AMT_PAYMENT_sum  = sum(AMT_PAYMENT, na.rm = TRUE),
+    inst_AMT_PAYMENT_mean = safe_mean(AMT_PAYMENT, na.rm = TRUE),
+    inst_AMT_PAYMENT_sum  = safe_sum(AMT_PAYMENT, na.rm = TRUE),
     
-    inst_delay_mean = mean(inst_delay, na.rm = TRUE),
+    inst_delay_mean = safe_mean(inst_delay, na.rm = TRUE),
     inst_delay_max  = ifelse(
       all(is.na(inst_delay)),
       NA_real_,
@@ -355,19 +373,188 @@ install_client <- install_prev_features |>
   summarise(
     COUNT_INSTALLMENT_LOANS = n(),
     
-    inst_AMT_INSTALMENT_mean = mean(inst_AMT_INSTALMENT_mean, na.rm = TRUE),
-    inst_AMT_INSTALMENT_sum  = sum(inst_AMT_INSTALMENT_sum, na.rm = TRUE),
+    inst_AMT_INSTALMENT_mean = safe_mean(inst_AMT_INSTALMENT_mean, na.rm = TRUE),
+    inst_AMT_INSTALMENT_sum  = safe_sum(inst_AMT_INSTALMENT_sum, na.rm = TRUE),
     
-    inst_AMT_PAYMENT_mean = mean(inst_AMT_PAYMENT_mean, na.rm = TRUE),
-    inst_AMT_PAYMENT_sum  = sum(inst_AMT_PAYMENT_sum, na.rm = TRUE),
+    inst_AMT_PAYMENT_mean = safe_mean(inst_AMT_PAYMENT_mean, na.rm = TRUE),
+    inst_AMT_PAYMENT_sum  = safe_sum(inst_AMT_PAYMENT_sum, na.rm = TRUE),
     
-    inst_delay_mean = mean(inst_delay_mean, na.rm = TRUE),
+    inst_delay_mean = safe_mean(inst_delay_mean, na.rm = TRUE),
     inst_delay_max = safe_max(inst_delay_max),
     
-    inst_ever_late_rate = mean(inst_ever_late, na.rm = TRUE),
+    inst_ever_late_rate = safe_mean(inst_ever_late, na.rm = TRUE),
     
     .groups = "drop"
   )
+
+# =========================================
+# Compute training-only statistics
+# =========================================
+compute_training_stats <- function(train) {
+  list(
+    EXT_SOURCE_1_median = median(train$EXT_SOURCE_1, na.rm = TRUE),
+    EXT_SOURCE_2_median = median(train$EXT_SOURCE_2, na.rm = TRUE),
+    EXT_SOURCE_3_median = median(train$EXT_SOURCE_3, na.rm = TRUE),
+    CNT_FAM_MEMBERS_median = median(train$CNT_FAM_MEMBERS, na.rm = TRUE),
+    AMT_ANNUITY_median = median(train$AMT_ANNUITY, na.rm = TRUE),
+    AMT_GOODS_PRICE_median = median(train$AMT_GOODS_PRICE, na.rm = TRUE),
+
+    # Age bins based on training data only
+    AGE_bins = quantile(
+      abs(train$DAYS_BIRTH) / 365,
+      probs = c(0, 0.25, 0.5, 0.75, 1),
+      na.rm = TRUE
+    )
+  )
+}
+
+# =========================================
+# Identify building-level numeric vars (except categorical)
+# =========================================
+normalized_building_vars <- dict |>
+  filter(
+    Table == "application_{train|test}.csv",
+    Description == "Normalized information about building where the client lives, What is average (_AVG suffix), modus (_MODE suffix), median (_MEDI suffix) apartment size, common area, living area, age of building, number of elevators, number of entrances, state of the building, number of floor"
+  ) |>
+  pull(Row) |>
+  setdiff(c("FONDKAPREMONT_MODE", "HOUSETYPE_MODE", "WALLSMATERIAL_MODE", "EMERGENCYSTATE_MODE"))
+
+# Function for obtaining the most frequent value (mode)
+get_mode <- function(x) {
+  ux <- na.omit(unique(x))
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+# =========================================
+# Update training stats to include building & categorical modes
+# =========================================
+compute_training_stats <- function(train) {
+  list(
+    EXT_SOURCE_1_median      = median(train$EXT_SOURCE_1, na.rm = TRUE),
+    EXT_SOURCE_2_median      = median(train$EXT_SOURCE_2, na.rm = TRUE),
+    EXT_SOURCE_3_median      = median(train$EXT_SOURCE_3, na.rm = TRUE),
+    CNT_FAM_MEMBERS_median   = median(train$CNT_FAM_MEMBERS, na.rm = TRUE),
+    AMT_ANNUITY_median       = median(train$AMT_ANNUITY, na.rm = TRUE),
+    AMT_GOODS_PRICE_median   = median(train$AMT_GOODS_PRICE, na.rm = TRUE),
+
+    # Modes for categorical variables
+    NAME_TYPE_SUITE_mode     = get_mode(train$NAME_TYPE_SUITE),
+    OCCUPATION_TYPE_mode     = get_mode(train$OCCUPATION_TYPE),
+    FONDKAPREMONT_MODE_mode  = get_mode(train$FONDKAPREMONT_MODE),
+    HOUSETYPE_MODE_mode      = get_mode(train$HOUSETYPE_MODE),
+    WALLSMATERIAL_MODE_mode  = get_mode(train$WALLSMATERIAL_MODE),
+    EMERGENCYSTATE_MODE_mode = get_mode(train$EMERGENCYSTATE_MODE),
+
+    # Age bins
+    AGE_bins = quantile(abs(train$DAYS_BIRTH) / 365,
+                        probs = c(0, 0.25, 0.5, 0.75, 1),
+                        na.rm = TRUE)
+  )
+}
+
+# ========================================================
+# Impute aggregated product-level features
+# ========================================================
+impute_client_aggregates <- function(df) {
+  
+  # Define groups of features
+  count_vars <- c(
+    "COUNT_POS_LOANS", "COUNT_BUREAU_RECORDS", "COUNT_CREDIT_CARDS",
+    "COUNT_PREV_APPLICATIONS", "COUNT_INSTALLMENT_LOANS"
+  )
+  
+  pos_vars <- grep("^pos_", names(df), value = TRUE)
+  bureau_vars <- grep("^bureau_", names(df), value = TRUE)
+  cc_vars <- grep("^cc_", names(df), value = TRUE)
+  prev_vars <- grep("^prev_", names(df), value = TRUE)
+  inst_vars <- grep("^inst_", names(df), value = TRUE)
+  
+  bureau_request_vars <- grep("^AMT_REQ_CREDIT_BUREAU_", names(df), value = TRUE)
+  
+  # All features to zero-fill
+  zero_fill_vars <- c(
+    count_vars,
+    pos_vars,
+    bureau_vars,
+    cc_vars,
+    prev_vars,
+    inst_vars,
+    bureau_request_vars
+  )
+  
+  # Zero-fill NAs
+  df <- df %>%
+    mutate(across(all_of(zero_fill_vars), ~replace_na(.x, 0)))
+  
+  # Optionally, create "ever had" indicators if needed
+  # For example: Did the client ever have a POS loan?
+  df <- df %>%
+    mutate(
+      HAS_POS_LOAN = as.integer(COUNT_POS_LOANS > 0),
+      HAS_BUREAU_RECORD = as.integer(COUNT_BUREAU_RECORDS > 0),
+      HAS_CREDIT_CARD = as.integer(COUNT_CREDIT_CARDS > 0),
+      HAS_PREV_APP = as.integer(COUNT_PREV_APPLICATIONS > 0),
+      HAS_INSTALLMENT_LOAN = as.integer(COUNT_INSTALLMENT_LOANS > 0)
+    )
+  
+  return(df)
+}
+
+# =========================================
+# Extend clean_application_data to handle building vars and categorical modes
+# =========================================
+clean_application_data <- function(df, stats) {
+  df |>
+    mutate(
+      # Missing indicators
+      EXT_SOURCE_1_missing = as.integer(is.na(EXT_SOURCE_1)),
+      EXT_SOURCE_2_missing = as.integer(is.na(EXT_SOURCE_2)),
+      EXT_SOURCE_3_missing = as.integer(is.na(EXT_SOURCE_3)),
+
+      # Impute numeric
+      EXT_SOURCE_1      = replace_na(EXT_SOURCE_1, stats$EXT_SOURCE_1_median),
+      EXT_SOURCE_2      = replace_na(EXT_SOURCE_2, stats$EXT_SOURCE_2_median),
+      EXT_SOURCE_3      = replace_na(EXT_SOURCE_3, stats$EXT_SOURCE_3_median),
+      CNT_FAM_MEMBERS   = replace_na(CNT_FAM_MEMBERS, stats$CNT_FAM_MEMBERS_median),
+      AMT_ANNUITY       = replace_na(AMT_ANNUITY, stats$AMT_ANNUITY_median),
+      AMT_GOODS_PRICE   = replace_na(AMT_GOODS_PRICE, stats$AMT_GOODS_PRICE_median),
+      bureau_DEBT_RATIO = replace_na(bureau_DEBT_RATIO, 0),
+      OWN_CAR_AGE = replace_na(OWN_CAR_AGE, 0),
+      OBS_30_CNT_SOCIAL_CIRCLE = replace_na(OBS_30_CNT_SOCIAL_CIRCLE, 0),
+      DEF_30_CNT_SOCIAL_CIRCLE = replace_na(DEF_30_CNT_SOCIAL_CIRCLE, 0),
+      OBS_60_CNT_SOCIAL_CIRCLE = replace_na(OBS_60_CNT_SOCIAL_CIRCLE, 0),
+      DEF_60_CNT_SOCIAL_CIRCLE = replace_na(DEF_60_CNT_SOCIAL_CIRCLE, 0),
+      DAYS_LAST_PHONE_CHANGE = replace_na(DAYS_LAST_PHONE_CHANGE, median(DAYS_LAST_PHONE_CHANGE, na.rm = TRUE)),
+
+      # Categorical imputation
+      NAME_TYPE_SUITE   = replace_na(NAME_TYPE_SUITE, stats$NAME_TYPE_SUITE_mode),
+      OCCUPATION_TYPE   = replace_na(OCCUPATION_TYPE, stats$OCCUPATION_TYPE_mode),
+      FONDKAPREMONT_MODE= replace_na(FONDKAPREMONT_MODE, stats$FONDKAPREMONT_MODE_mode),
+      HOUSETYPE_MODE    = replace_na(HOUSETYPE_MODE, stats$HOUSETYPE_MODE_mode),
+      WALLSMATERIAL_MODE= replace_na(WALLSMATERIAL_MODE, stats$WALLSMATERIAL_MODE_mode),
+      EMERGENCYSTATE_MODE_missing = as.integer(is.na(EMERGENCYSTATE_MODE)),
+      EMERGENCYSTATE_MODE = replace_na(EMERGENCYSTATE_MODE, stats$EMERGENCYSTATE_MODE_mode),
+
+      # Building-level numeric vars: zero-fill
+      across(all_of(normalized_building_vars), ~replace_na(.x, 0)),
+
+      # Fix demographic days
+      DAYS_EMPLOYED     = ifelse(DAYS_EMPLOYED == 365243, 0, abs(DAYS_EMPLOYED)),
+      AGE_YEARS         = abs(DAYS_BIRTH) / 365,
+
+      # Financial ratios
+      CREDIT_TO_INCOME  = AMT_CREDIT / (AMT_INCOME_TOTAL + 1),
+      ANNUITY_TO_INCOME = AMT_ANNUITY / (AMT_INCOME_TOTAL + 1),
+      LOAN_TO_GOODS     = AMT_CREDIT / (AMT_GOODS_PRICE + 1),
+      CREDIT_PER_PERSON = AMT_CREDIT / (CNT_FAM_MEMBERS + 1),
+
+      # Binning
+      AGE_BIN = cut(AGE_YEARS,
+                    breaks = stats$AGE_bins,
+                    include.lowest = TRUE),
+      AGE_BIN           = replace_na(AGE_BIN, get_mode(AGE_BIN))
+    )
+}
 
 # ==========================
 # Merge Client-Level Data
@@ -381,94 +568,18 @@ augment_application <- function(app_df) {
     left_join(install_client, by = "SK_ID_CURR")
 }
 
-# Apply augmentations
+# Apply augmentation
 train_aug <- augment_application(train)
 test_aug  <- augment_application(test)
 
-# ===================
-# Data Manipulation
-# ===================
+# Zero-fill and create indicators
+train_aug <- impute_client_aggregates(train_aug)
+test_aug  <- impute_client_aggregates(test_aug)
 
-# Combine Training and Test Data Sets
-test_aug <- test_aug |> 
-  mutate(TARGET = NA)
-
-combined <- bind_rows(
-  train_aug |> mutate(dataset = "train"),
-  test_aug  |> mutate(dataset = "test")
-)
-
-# Identify normalized building-level variables except the 4 categorical exceptions
-normalized_building_vars <- dict |>
-  filter(Table == "application_{train|test}.csv",
-         Description == "Normalized information about building where the client lives, What is average (_AVG suffix), modus (_MODE suffix), median (_MEDI suffix) apartment size, common area, living area, age of building, number of elevators, number of entrances, state of the building, number of floor") |>
-  pull(Row) |>
-  setdiff(c("FONDKAPREMONT_MODE", "HOUSETYPE_MODE", "WALLSMATERIAL_MODE", "EMERGENCYSTATE_MODE"))
-
-# Function for obtaining the most often response (mode) for categorical variables
-get_mode <- function(x) {
-  ux <- na.omit(unique(x))
-  ux[which.max(tabulate(match(x, ux)))]
-}
-
-combined <- combined |>
-  mutate(
-  # Address Null Values
-    AMT_ANNUITY = replace_na(AMT_ANNUITY, median(AMT_ANNUITY, na.rm = TRUE)),
-    AMT_GOODS_PRICE = replace_na(AMT_GOODS_PRICE, median(AMT_GOODS_PRICE, na.rm = TRUE)),
-    NAME_TYPE_SUITE = replace_na(NAME_TYPE_SUITE, "Unknown"),
-    OWN_CAR_AGE = replace_na(OWN_CAR_AGE, 0),
-    OCCUPATION_TYPE = replace_na(OCCUPATION_TYPE, "Unknown"),
-    CNT_FAM_MEMBERS = replace_na(CNT_FAM_MEMBERS, median(CNT_FAM_MEMBERS, na.rm = TRUE)),
-    EXT_SOURCE_1_missing = as.integer(is.na(EXT_SOURCE_1)),
-    EXT_SOURCE_1 = replace_na(EXT_SOURCE_1, median(EXT_SOURCE_1, na.rm = TRUE)),
-    EXT_SOURCE_2 = replace_na(EXT_SOURCE_2, median(EXT_SOURCE_2, na.rm = TRUE)),
-    EXT_SOURCE_3_missing = as.integer(is.na(EXT_SOURCE_3)),
-    EXT_SOURCE_3 = replace_na(EXT_SOURCE_3, median(EXT_SOURCE_3, na.rm = TRUE)),
-    across(all_of(normalized_building_vars), ~replace_na(.x, 0)),
-    FONDKAPREMONT_MODE = replace_na(FONDKAPREMONT_MODE, "None"),
-    HOUSETYPE_MODE     = replace_na(HOUSETYPE_MODE, "Other"),
-    WALLSMATERIAL_MODE = replace_na(WALLSMATERIAL_MODE, "Unknown"),
-    EMERGENCYSTATE_MODE = replace_na(EMERGENCYSTATE_MODE, get_mode(EMERGENCYSTATE_MODE)),
-    EMERGENCYSTATE_MODE_missing = as.integer(is.na(EMERGENCYSTATE_MODE)),
-    OBS_30_CNT_SOCIAL_CIRCLE = replace_na(OBS_30_CNT_SOCIAL_CIRCLE, 0),
-    DEF_30_CNT_SOCIAL_CIRCLE = replace_na(DEF_30_CNT_SOCIAL_CIRCLE, 0),
-    OBS_60_CNT_SOCIAL_CIRCLE = replace_na(OBS_60_CNT_SOCIAL_CIRCLE, 0),
-    DEF_60_CNT_SOCIAL_CIRCLE = replace_na(DEF_60_CNT_SOCIAL_CIRCLE, 0),
-    DAYS_LAST_PHONE_CHANGE = replace_na(DAYS_LAST_PHONE_CHANGE, 0),
-    across(starts_with("AMT_REQ_CREDIT_BUREAU_"), ~replace_na(.x, 0)),
-    COUNT_POS_LOANS = replace_na(COUNT_POS_LOANS, 0),
-    across(starts_with("pos_"), ~replace_na(.x, 0)),
-    COUNT_BUREAU_RECORDS = replace_na(COUNT_BUREAU_RECORDS, 0),
-    bureau_AMT_CREDIT_SUM_mean = replace_na(bureau_AMT_CREDIT_SUM_mean, 0),
-    bureau_AMT_CREDIT_SUM_max = replace_na(bureau_AMT_CREDIT_SUM_max, 0),
-    bureau_AMT_CREDIT_SUM_debt = replace_na(bureau_AMT_CREDIT_SUM_debt, 0),
-    bureau_days_credit_mean = replace_na(bureau_days_credit_mean, 0),
-    bureau_days_credit_end_max = replace_na(bureau_days_credit_end_max, 0),
-    bureau_ever_overdue_missing = as.integer(is.na(bureau_ever_overdue_rate)),
-    bureau_ever_overdue_rate = replace_na(bureau_ever_overdue_rate, 0),
-    COUNT_CREDIT_CARDS = replace_na(COUNT_CREDIT_CARDS, 0),
-    across(starts_with("cc_"), ~replace_na(.x, 0)),
-    COUNT_PREV_APPLICATIONS = replace_na(COUNT_PREV_APPLICATIONS, 0),
-    across(starts_with("prev_"), ~replace_na(.x, 0)),
-    COUNT_INSTALLMENT_LOANS = replace_na(COUNT_INSTALLMENT_LOANS, 0),
-    across(starts_with("inst_"), ~replace_na(.x, 0)),
-  # `Days_` Variables no longer relative to the application
-    DAYS_EMPLOYED = ifelse(DAYS_EMPLOYED == 0, 0, abs(DAYS_EMPLOYED)),
-    AGE = abs(DAYS_BIRTH) / 365,
-    DAYS_REGISTRATION = abs(DAYS_REGISTRATION),
-    DAYS_ID_PUBLISH = abs(DAYS_ID_PUBLISH))
-
-# ===================================
-# Split Training and Test Data Sets
-# ===================================
-train_aug <- combined |> 
-  filter(dataset == "train") |> 
-  select(-dataset)
-
-test_aug <- combined |> 
-  filter(dataset == "test") |> 
-  select(-dataset, -TARGET)
+# Then apply your clean_application_data()
+training_stats <- compute_training_stats(train_aug)
+train_aug <- clean_application_data(train_aug, training_stats)
+test_aug  <- clean_application_data(test_aug, training_stats)
 
 # =========================
 # Write Final Data Sets
