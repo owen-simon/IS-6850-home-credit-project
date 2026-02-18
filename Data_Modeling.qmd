@@ -21,6 +21,10 @@ library(tidyverse)
 library(tidyr)
 library(dplyr)
 library(gt)
+library(caret)
+library(pROC)
+library(randomForest)
+library(gbm)
 
 data_dir <- "data-files"
 
@@ -29,6 +33,175 @@ test <- read_csv(file.path(data_dir, "test_final.csv"))
 train <- read_csv(file.path(data_dir, "train_final.csv"))
 ```
 
+# Majority Class Model
+
 ```{r}
-summary(test)
+TARGET_dist <- train |> 
+  count(TARGET) |>
+  mutate(proportion = n / sum(n))
+
+gt(TARGET_dist)
+```
+
+```{r}
+# Majority class predictions
+baseline_predictions <- rep.int(0, nrow(train))
+baseline_accuracy <- mean(baseline_predictions == train$TARGET)
+
+# AUC Calculation
+majority_class_prob <- TARGET_dist$proportion[TARGET_dist$TARGET == 0]
+baseline_probs <- rep(majority_class_prob, nrow(train))
+baseline_auc <- roc(train$TARGET, baseline_probs)$auc
+
+# Create results summary
+baseline_results <- tibble(
+  Metric = c("Baseline Accuracy", "Baseline AUC"),
+  Value = c(baseline_accuracy, as.numeric(baseline_auc))
+)
+
+gt(baseline_results)
+```
+
+The majority class (TARGET = 0) represents approximately 91.9% of the training data, indicating a significant class imbalance. A baseline model that always predicts the majority class would achieve an accuracy of around 91.9%. However, this model would have an AUC of 0.5, as it does not differentiate between the classes.
+
+# Compare Candidate Models
+
+## Data Preparation
+```{r}
+# Use subsample for efficiency (30K rows)
+set.seed(42)
+train_sample <- train |>
+  slice_sample(n = 30000)
+
+# Prepare numeric data
+train_numeric <- train_sample |>
+  select(-SK_ID_CURR) |>
+  select(where(is.numeric)) |>
+  mutate(TARGET = factor(TARGET, levels = c(0, 1), labels = c("No", "Yes")))
+
+# Prepare categorical data
+train_categorical <- train_sample |>
+  select(-SK_ID_CURR) |>
+  select(where(is.character), TARGET) |>
+  mutate(TARGET = factor(TARGET, levels = c(0, 1), labels = c("No", "Yes")))
+
+# Prepare all features
+train_all <- train_sample |>
+  select(-SK_ID_CURR) |>
+  mutate(TARGET = factor(TARGET, levels = c(0, 1), labels = c("No", "Yes")))
+
+# Set up 2-fold cross-validation for efficiency
+set.seed(42)
+ctrl <- trainControl(
+  method = "cv",
+  number = 2,
+  classProbs = TRUE,
+  summaryFunction = twoClassSummary,
+  savePredictions = "final"
+)
+```
+
+## Model 1: Full Logistic Regression (All Features)
+
+```{r}
+# Model 1: Full Logistic Regression on all features
+set.seed(42)
+model_lr_full <- train(
+  TARGET ~ .,
+  data = train_all,
+  method = "glm",
+  family = binomial(),
+  trControl = ctrl,
+  metric = "ROC"
+)
+```
+
+## Model 2: Stepwise Logistic Regression (All Features)
+
+```{r}
+# Model 2: Logistic Regression with stepwise selection on all features
+set.seed(42)
+model_lr_stepwise <- train(
+  TARGET ~ .,
+  data = train_all,
+  method = "glmStepAIC",
+  trControl = ctrl,
+  metric = "ROC",
+  trace = 0,
+  direction = "both"
+)
+```
+
+## Model 3: LASSO Logistic Regression (All Features)
+
+```{r}
+# Model 3: LASSO (L1 regularization) on all features
+set.seed(42)
+model_lasso <- train(
+  TARGET ~ .,
+  data = train_all,
+  method = "glmnet",
+  family = "binomial",
+  trControl = ctrl,
+  metric = "ROC",
+  tuneGrid = expand.grid(
+    alpha = 1,  # 1 = LASSO, 0 = Ridge
+    lambda = seq(0.0001, 0.005, length = 3)
+  )
+)
+```
+
+## Model 4: Random Forest (All Features)
+
+```{r}
+# Model 4: Random Forest on all features
+set.seed(42)
+model_rf <- train(
+  TARGET ~ .,
+  data = train_all,
+  method = "rf",
+  trControl = ctrl,
+  metric = "ROC",
+  tuneGrid = data.frame(mtry = 20),
+  ntree = 30
+)
+```
+
+## Model 5: Gradient Boosting (All Features)
+
+```{r}
+# Model 5: Gradient Boosting (GBM) on all features
+set.seed(42)
+model_gbm <- train(
+  TARGET ~ .,
+  data = train_all,
+  method = "gbm",
+  trControl = ctrl,
+  metric = "ROC",
+  tuneGrid = expand.grid(
+    n.trees = 50,
+    interaction.depth = 2,
+    shrinkage = 0.1,
+    n.minobsinnode = 10
+  ),
+  verbose = FALSE
+)
+```
+
+## Model Comparison
+
+```{r}
+# Compare models
+model_comparison <- resamples(list(
+  "Full LR" = model_lr_full,
+  "Stepwise LR" = model_lr_stepwise,
+  "LASSO" = model_lasso,
+  "Random Forest" = model_rf,
+  "Gradient Boosting" = model_gbm
+))
+
+summary(model_comparison)
+
+# Visualize comparison
+dotplot(model_comparison)
 ```
