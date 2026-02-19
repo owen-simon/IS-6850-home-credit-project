@@ -128,6 +128,7 @@ model_lr <- train(
 
 ```{r}
 set.seed(42)
+
 model_lasso <- train(
   TARGET ~ .,
   data = train_numeric,
@@ -137,8 +138,8 @@ model_lasso <- train(
   metric = "ROC",
   preProcess = c("center", "scale"),
   tuneGrid = expand.grid(
-    alpha = seq(0, 1, length = 5), 
-    lambda = 10^seq(-5, 2, length = 40)
+      alpha = c(0.5, 1),  # includes pure LASSO
+      lambda = 10^seq(-4, 0, length = 10)
   )
 )
 ```
@@ -147,21 +148,22 @@ model_lasso <- train(
 
 ```{r}
 set.seed(42)
+
 model_rf <- train(
   TARGET ~ .,
   data = train_all,
   method = "rf",
   trControl = ctrl,
   metric = "ROC",
-  tuneGrid = data.frame(mtry = c(15, 25, 35)),
-  ntree = 500,
+  tuneGrid = data.frame(mtry = c(20, 30)),
+  ntree = 100, 
   importance = TRUE
 )
 ```
 
 ## Stop Parallel Cluster
 
-```{r}
+ ```{r}
 stopCluster(cl)
 registerDoSEQ()
 ```
@@ -170,9 +172,9 @@ registerDoSEQ()
 
 ```{r}
 model_comparison <- resamples(list(
-  Logistic_Full = model_lr,
-  LASSO = model_lasso,
-  RandomForest = model_rf
+  "Logistic_Full" = model_lr,
+  "LASSO" = model_lasso,
+  "RandomForest" = model_rf
 ))
 ```
 
