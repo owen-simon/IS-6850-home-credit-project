@@ -500,9 +500,9 @@ impute_client_aggregates <- function(df) {
   return(df)
 }
 
-# =========================================
+# ==============================================================================
 # Extend clean_application_data to handle building vars and categorical modes
-# =========================================
+# ==============================================================================
 clean_application_data <- function(df, stats) {
   df |>
     mutate(
@@ -556,6 +556,103 @@ clean_application_data <- function(df, stats) {
     )
 }
 
+# =========================================
+# Function to recode rare factor levels
+# =========================================
+recode_rare_factors <- function(df) {
+
+  # CODE_GENDER
+  df$CODE_GENDER <- as.factor(df$CODE_GENDER)
+  if(!"F" %in% levels(df$CODE_GENDER)) {
+    levels(df$CODE_GENDER) <- c(levels(df$CODE_GENDER), "F")
+  }
+  df$CODE_GENDER[df$CODE_GENDER == "XNA"] <- "F"
+
+  # NAME_TYPE_SUITE
+  df$NAME_TYPE_SUITE <- as.factor(df$NAME_TYPE_SUITE)
+  if(!"Other" %in% levels(df$NAME_TYPE_SUITE)) {
+    levels(df$NAME_TYPE_SUITE) <- c(levels(df$NAME_TYPE_SUITE), "Other")
+  }
+  rare_levels_suite <- c("Other_A", "Other_B", "Group of people")
+  df$NAME_TYPE_SUITE[df$NAME_TYPE_SUITE %in% rare_levels_suite] <- "Other"
+  df$NAME_TYPE_SUITE <- droplevels(df$NAME_TYPE_SUITE)
+
+  # NAME_INCOME_TYPE
+  df$NAME_INCOME_TYPE <- as.factor(df$NAME_INCOME_TYPE)
+  if(!"Other" %in% levels(df$NAME_INCOME_TYPE)) {
+    levels(df$NAME_INCOME_TYPE) <- c(levels(df$NAME_INCOME_TYPE), "Other")
+  }
+  rare_income_levels <- c("Businessman", "Maternity leave", "Student", "Unemployed")
+  df$NAME_INCOME_TYPE[df$NAME_INCOME_TYPE %in% rare_income_levels] <- "Other"
+  df$NAME_INCOME_TYPE <- droplevels(df$NAME_INCOME_TYPE)
+
+  # NAME_EDUCATION_TYPE
+  df$NAME_EDUCATION_TYPE <- as.factor(df$NAME_EDUCATION_TYPE)
+  df <- df |>
+    mutate(NAME_EDUCATION_TYPE = case_when(
+      NAME_EDUCATION_TYPE %in% c("Lower secondary") ~ "Lower secondary",
+      NAME_EDUCATION_TYPE %in% c("Secondary / secondary special") ~ "Secondary / secondary special",
+      NAME_EDUCATION_TYPE %in% c("Incomplete higher") ~ "Incomplete higher",
+      NAME_EDUCATION_TYPE %in% c("Higher education", "Academic degree") ~ "Academic / Bachelors or higher",
+      TRUE ~ "Other"
+    ))
+
+  # NAME_FAMILY_STATUS
+  df$NAME_FAMILY_STATUS <- as.factor(df$NAME_FAMILY_STATUS)
+  if(!"Married" %in% levels(df$NAME_FAMILY_STATUS)) {
+    levels(df$NAME_FAMILY_STATUS) <- c(levels(df$NAME_FAMILY_STATUS), "Married")
+  }
+  df <- df |>
+    mutate(NAME_FAMILY_STATUS = ifelse(NAME_FAMILY_STATUS == "Unknown",
+                                       "Married",
+                                       as.character(NAME_FAMILY_STATUS))) |>
+    mutate(NAME_FAMILY_STATUS = as.factor(NAME_FAMILY_STATUS))
+
+  # NAME_HOUSING_TYPE
+  df$NAME_HOUSING_TYPE <- as.factor(df$NAME_HOUSING_TYPE)
+  df <- df |>
+    mutate(NAME_HOUSING_TYPE = case_when(
+      NAME_HOUSING_TYPE %in% c("Co-op apartment", "Office apartment") ~ "Other",
+      NAME_HOUSING_TYPE %in% c("Municipal apartment", "Rented apartment") ~ "Rented / Municipal",
+      TRUE ~ as.character(NAME_HOUSING_TYPE)
+    )) |>
+    mutate(NAME_HOUSING_TYPE = as.factor(NAME_HOUSING_TYPE))
+
+  # OCCUPATION_TYPE
+  df$OCCUPATION_TYPE <- as.factor(df$OCCUPATION_TYPE)
+  df <- df |>
+    mutate(OCCUPATION_TYPE = case_when(
+      OCCUPATION_TYPE %in% c("Laborers", "Core staff", "Sales staff", "Managers", "Drivers") ~ as.character(OCCUPATION_TYPE),
+      TRUE ~ "Other"
+    )) |>
+    mutate(OCCUPATION_TYPE = as.factor(OCCUPATION_TYPE))
+
+  # ORGANIZATION_TYPE
+  df$ORGANIZATION_TYPE <- as.factor(df$ORGANIZATION_TYPE)
+  df <- df |>
+    mutate(ORGANIZATION_TYPE = case_when(
+      str_detect(ORGANIZATION_TYPE, "^Industry") ~ "Industry",
+      str_detect(ORGANIZATION_TYPE, "^Trade") ~ "Trade",
+      str_detect(ORGANIZATION_TYPE, "^Transport") ~ "Transport",
+      ORGANIZATION_TYPE %in% c("Business Entity Type 3", "Government",
+                               "Construction", "Housing", "Medicine",
+                               "Self-employed", "School", "XNA") ~ as.character(ORGANIZATION_TYPE),
+      TRUE ~ "Other"
+    )) |>
+    mutate(ORGANIZATION_TYPE = as.factor(ORGANIZATION_TYPE))
+
+  # WALLSMATERIAL_MODE
+  df$WALLSMATERIAL_MODE <- as.factor(df$WALLSMATERIAL_MODE)
+  rare_walls <- c("Monolithic", "Mixed", "Others")
+  df <- df |>
+    mutate(WALLSMATERIAL_MODE = ifelse(WALLSMATERIAL_MODE %in% rare_walls,
+                                       "Other",
+                                       as.character(WALLSMATERIAL_MODE))) |>
+    mutate(WALLSMATERIAL_MODE = as.factor(WALLSMATERIAL_MODE))
+
+  return(df)
+}
+
 # ==========================
 # Merge Client-Level Data
 # ==========================
@@ -581,9 +678,13 @@ training_stats <- compute_training_stats(train_aug)
 train_aug <- clean_application_data(train_aug, training_stats)
 test_aug  <- clean_application_data(test_aug, training_stats)
 
+# Address rare factor levels
+train_aug <- recode_rare_factors(train_aug)
+test_aug  <- recode_rare_factors(test_aug)
+
+
 # =========================
 # Write Final Data Sets
 # =========================
-
 write_csv(train_aug, file.path(data_dir, "train_final.csv"))
 write_csv(test_aug,  file.path(data_dir, "test_final.csv"))
