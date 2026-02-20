@@ -1,0 +1,192 @@
+---
+title: "Data Modeling"
+author: "Owen Simon"
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    toc-title: "Contents"
+    embed-resources: true
+execute:
+  include: true
+  eval: true    
+  warning: false
+  message: false
+---
+
+```{r}
+# Load libraries
+library(tidyverse)
+library(caret)
+library(pROC)
+library(doParallel)
+library(gt)
+
+data_dir <- "data-files"
+
+# Read datasets
+train <- read_csv(file.path(data_dir, "train_final.csv")) |>
+  mutate(across(where(is.character), as.factor))
+
+test <- read_csv(file.path(data_dir, "test_final.csv")) |>
+  mutate(across(where(is.character), as.factor))
+```
+
+# Majority Class Model
+
+```{r}
+TARGET_dist <- train |> 
+  count(TARGET) |>
+  mutate(proportion = n / sum(n))
+
+gt(TARGET_dist)
+```
+
+```{r}
+# Majority class predictions
+baseline_predictions <- rep.int(0, nrow(train))
+baseline_accuracy <- mean(baseline_predictions == train$TARGET)
+
+# AUC Calculation
+majority_class_prob <- TARGET_dist$proportion[TARGET_dist$TARGET == 0]
+baseline_probs <- rep(majority_class_prob, nrow(train))
+baseline_auc <- roc(train$TARGET, baseline_probs)$auc
+
+# Create results summary
+baseline_results <- tibble(
+  Metric = c("Baseline Accuracy", "Baseline AUC"),
+  Value = c(baseline_accuracy, as.numeric(baseline_auc))
+)
+
+gt(baseline_results)
+```
+
+The majority class (TARGET = 0) represents approximately 91.9% of the training data, indicating a significant class imbalance. A baseline model that always predicts the majority class would achieve an accuracy of around 91.9%. However, this model would have an AUC of 0.5, as it does not differentiate between the classes.
+
+# Compare Candidate Models
+
+## Data Preparation
+```{r}
+raw_app_train <- read_csv(file.path(data_dir, "application_train.csv")) |>
+  mutate(across(where(is.character), as.factor))
+
+# Keep only application-based predictors
+application_cols <- colnames(raw_app_train)
+application_cols_in_train <- intersect(application_cols, colnames(train))
+
+train_all <- train |>
+  select(all_of(application_cols_in_train), TARGET, -SK_ID_CURR) |>
+  mutate(TARGET = factor(TARGET, levels = c(0, 1), labels = c("No", "Yes")))
+
+# Numeric predictors only for LASSO
+numeric_vars <- names(train_all)[sapply(train_all, is.numeric)]
+train_numeric <- train_all |>
+  select(all_of(numeric_vars), TARGET)
+```
+
+The model comparison will focus on the original application data. Supplementary data sources (bureau, previous applications, etc.) will be explored in future iterations. The LASSO model will be trained using only numeric predictors.
+
+## Cross-Validation Control
+
+```{r}
+set.seed(42)
+ctrl <- trainControl(
+  method = "cv",
+  number = 5,
+  classProbs = TRUE,
+  summaryFunction = twoClassSummary,
+  savePredictions = "final"
+)
+```
+
+## Enable Parallel Processing
+
+```{r}
+n_cores <- max(1, parallel::detectCores() - 1)
+cl <- makePSOCKcluster(n_cores)
+registerDoParallel(cl)
+```
+
+## Modeling
+
+### Model 1: Logistic Regression (Full)
+
+```{r}
+set.seed(42)
+model_lr <- train(
+  TARGET ~ .,
+  data = train_all,
+  method = "glm",
+  family = binomial,
+  trControl = ctrl,
+  metric = "ROC"
+)
+```
+
+### Model 2: LASSO Logistic Regression (Numeric Only)
+
+```{r}
+set.seed(42)
+
+model_lasso <- train(
+  TARGET ~ .,
+  data = train_numeric,
+  method = "glmnet",
+  family = "binomial",
+  trControl = ctrl,
+  metric = "ROC",
+  preProcess = c("center", "scale"),
+  tuneGrid = expand.grid(
+      alpha = c(0.5, 1),  # includes pure LASSO
+      lambda = 10^seq(-4, 0, length = 10)
+  )
+)
+```
+
+### Model 3: Random Forest (Full)
+
+```{r}
+set.seed(42)
+
+model_rf <- train(
+  TARGET ~ .,
+  data = train_all,
+  method = "rf",
+  trControl = ctrl,
+  metric = "ROC",
+  tuneGrid = data.frame(mtry = c(20, 30)),
+  ntree = 100, 
+  importance = TRUE
+)
+```
+
+## Stop Parallel Cluster
+
+ ```{r}
+stopCluster(cl)
+registerDoSEQ()
+```
+
+## Model Comparison
+
+```{r}
+model_comparison <- resamples(list(
+  "Logistic_Full" = model_lr,
+  "LASSO" = model_lasso,
+  "RandomForest" = model_rf
+))
+```
+
+### Summary of Model Comparison
+
+```{r}
+summary(model_comparison)
+```
+
+### Statistical Test of AUC Differences
+
+```{r}
+diff_results <- diff(model_comparison)
+summary(diff_results)
+```

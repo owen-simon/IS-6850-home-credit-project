@@ -1,4 +1,3 @@
-
 ---
 title: "Exploratory Data Analysis"
 author: "Owen Simon"
@@ -16,9 +15,19 @@ execute:
   message: false
 ---
 
-# Buisness Problem
+# Introduction
+
+## Business Problem
 
 Many potential borrowers lack sufficient credit histories, making it difficult for Home Credit to accurately assess their creditworthiness. This creates a challenge in extending loans to unbanked individuals while managing default risk. To continue expanding financial inclusion responsibly, Home Credit must rely on alternative data to assess repayment risk for these applicants.
+
+## EDA Objective
+
+The goal of this exploratory data analysis (EDA) is to develop an initial understanding of the applicant data used by Home Credit, with a focus on identifying patterns, relationships, and data quality issues that may influence loan default risk. Specifically, this analysis examines the distribution of key applicant characteristics, explores relationships between predictor variables and the `TARGET` outcome (yes/no loan default), and highlights potential challenges such as missing values, class imbalance, and outliers. Insights from this EDA will inform feature selection, data preprocessing, and modeling decisions aimed at improving credit risk assessment for applicants with limited or no traditional credit history.
+
+# Data Exploration
+
+## Setup
 
 ```{r}
 # Load libraries
@@ -30,139 +39,447 @@ library(gt)
 data_dir <- "data-files"
 
 # Read primary datasets
-train <- read_csv(file.path(data_dir, "application_train.csv"))
+dict <- read_csv(file.path(data_dir, "HomeCredit_columns_description.csv"))
 test  <- read_csv(file.path(data_dir, "application_test.csv"))
+train <- read_csv(file.path(data_dir, "application_train.csv"))
 ```
 
-# 1 - Majority Class Analysis
+## 1 - Majority Class Analysis
 
 ```{r}
 target_proportion <- train |>
   count(TARGET) |>
   mutate(Proportion = round(n / sum(n), 4)) |>
-  rename(
-    Default = TARGET,
-    Count = n
-  )
+  rename(Default = TARGET,
+         Count = n)
 
 gt(target_proportion)
 ```
 
 A majority-class model that always predicts non-default would achieve an accuracy of approximately 92%.
 
-# 2 - Correlation Analysis
-
-## 2.1 - Numeric Variables
+## 2 - Correlation Analysis 
 
 ```{r}
-library(tidyverse)
+# Count types of all variables except TARGET and SK_ID_CURR
+var_types <- train |>
+  select(-TARGET, -SK_ID_CURR) |>
+  summarise(across(everything(), ~ class(.))) |>
+  pivot_longer(everything(), names_to = "Variable", values_to = "Data_Type") |>
+  count(Data_Type, name = "Count")
 
-# Numeric correlations
-numeric_corr <- train |>
-  select(where(is.numeric), -TARGET) |>
-  summarise(across(everything(), ~ cor(.x, train$TARGET, use = "complete.obs"))) |>
-  pivot_longer(everything(), names_to = "Predictor", values_to = "Correlation") |>
-  arrange(desc(abs(Correlation)))
-
-gt(numeric_corr)
-
+gt(var_types)
 ```
 
-```{r}
+Of the 120 variables in the training dataset (excluding `TARGET` and `SK_ID_CURR`), 105 are numeric and 16 are categorical.
 
-cat_vars <- train |> select(where(is.character)) |> names()
-
-categorical_corr <- purrr::map_dfr(cat_vars, function(var) {
-  df <- train |>
-    dplyr::count(.data[[var]], TARGET) |>
-    tidyr::pivot_wider(names_from = TARGET, values_from = n, values_fill = 0) |>
-    dplyr::mutate(Diff = abs(`1` / (`0` + `1`) - `0` / (`0` + `1`)))
-
-  tibble::tibble(Predictor = var, Max_Proportion_Diff = max(df$Diff, na.rm = TRUE))
-}) |>
-  dplyr::arrange(desc(Max_Proportion_Diff))
-
-```
+### 2.1 - Numeric Variables
 
 ```{r}
-# Select Numeric Variables
-numeric_vars <- train |> select(where(is.numeric)) |>
-	select(-TARGET) |> 
-	names()
-
-# Calculate Correlation with Target
-numeric_summary <- lapply(numeric_vars, function(x) {
-  data.frame(
-    Predictor = x,
-    Correlation_with_Target = cor(train[[x]], train$TARGET, use = "complete.obs")
-  )
-}) |> bind_rows()
-
-# Rank by absolute correlation
-numeric_summary <- numeric_summary |> 
-	arrange(desc(abs(Correlation_with_Target)))
+numeric_summary <- lapply(
+  names(train |> select(where(is.numeric), -TARGET, -SK_ID_CURR)),
+  function(x) {
+    data.frame(
+      Predictor = x,
+      Correlation_with_Target = round(cor(train[[x]], train$TARGET, use = "complete.obs"), 4)
+    )
+  }
+) |> bind_rows() |>
+  arrange(desc(abs(Correlation_with_Target)))
 
 gt(numeric_summary)
 ```
 
-## 2.2 - Categorical Variables
+The numeric variables with the highest correlation to the target variable are `EXT_SOURCE_3`, `EXT_SOURCE_2`, and `EXT_SOURCE_1`, which are all normalized scores from external data sources.
 
 ```{r}
-# Convert character columns to factors
-train_factored <- train |>
-  mutate(across(where(is.character), as.factor))
-
-categorical_vars <- train_factored |> select(where(is.factor)) |> names()
-
-categorical_summary <- lapply(categorical_vars, function(var) {
-  # calculate max proportion difference between target classes for each category
-  prop_diff <- train_factored |>
-    group_by(.data[[var]], TARGET) |>
-    summarise(n = n(), .groups = "drop") |>
-    pivot_wider(names_from = TARGET, values_from = n, values_fill = 0) |>
-    mutate(
-      Total = `0` + `1`,
-      Proportion_0 = `0` / Total,
-      Proportion_1 = `1` / Total,
-      Difference = abs(Proportion_1 - Proportion_0)
-    )
-  
-  # return a data frame with max difference for this variable
-  data.frame(
-    Predictor = var,
-    Max_Proportion_Diff = max(prop_diff$Difference, na.rm = TRUE)
-  )
-}) |> bind_rows()
-
-# Rank by largest difference
-categorical_summary <- categorical_summary |> 
-    arrange(desc(Max_Proportion_Diff))
-
-gt(categorical_summary)
+train |>
+  select(TARGET, EXT_SOURCE_1, EXT_SOURCE_2, EXT_SOURCE_3) |>
+  pivot_longer(
+    cols = starts_with("EXT_SOURCE"),
+    names_to = "Source",
+    values_to = "Value"
+  ) |>
+  ggplot(aes(x = factor(TARGET), y = Value)) +
+  geom_boxplot() +
+  facet_wrap(~ Source, scales = "fixed") +  # fixed y-axis across facets
+  labs(
+    x = "Default (TARGET)",
+    y = "EXT_SOURCE Value",
+    title = "EXT_SOURCE Variables by Loan Default Status"
+  ) +
+  theme_minimal()
 ```
 
+Across all three `EXT_SOURCE_` variables, non-defaulted applicants (`TARGET` = 0) exhibit higher median values and overall distributions compared to defaulted applicants (`TARGET` = 1). This consistent separation suggests a negative association between `EXT_SOURCE_` scores and loan default risk, indicating that higher external risk scores are associated with lower likelihood of default. Notably, `EXT_SOURCE_2` shows a large number of outliers near 0, all of which occur for non-defaulted applicants (`TARGET` = 0), suggesting unusual low scores among borrowers who ultimately did not default.
+
+### 2.2 - Categorical Variables
+
 ```{r}
-# Add a placeholder SalePrice to test
+# Summarize categorical variables
+cat_summary <- lapply(
+  names(train |> select(where(is.character), -TARGET, -SK_ID_CURR)),
+  function(x) {
+    rates <- train |> group_by(.data[[x]]) |>
+      summarise(Default_Rate = mean(TARGET, na.rm = TRUE), .groups = "drop")
+    
+    data.frame(
+      Predictor = x,
+      Max_Proportion_Diff = max(rates$Default_Rate) - min(rates$Default_Rate)
+    )
+  }
+) |> bind_rows() |>
+  arrange(desc(Max_Proportion_Diff))
+
+gt(cat_summary)
+```
+
+`NAME_INCOME_TYPE` shows the strongest separation in default rates across its categories, suggesting it may be the most informative categorical predictor.
+
+```{r}
+train |>
+  group_by(NAME_INCOME_TYPE) |>
+  summarise(
+    Default_Rate = mean(TARGET, na.rm = TRUE),
+    Count = n(),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = reorder(NAME_INCOME_TYPE, Default_Rate), y = Default_Rate)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = scales::percent(Default_Rate, accuracy = 1)), 
+            vjust = -0.38) +
+  labs(
+    title = "Default Rate by Income Type",
+    x = "Income Type",
+    y = "Default Rate"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Loan default rate is highest amongst "Unemployed" and "Maternity Leave" income types at 40% and 36% respectively, while "Student" and "Businessman" have default rates of 0%.
+
+## 3 - Missing Data
+
+```{r}
+# Add a placeholder TARGET to test
 test <- test |> 
   mutate(TARGET = NA)
 
 # Combine train and test
 combined <- bind_rows(
-  train |> mutate(dataset = "train"),
+  train |>mutate(dataset = "train"),
   test  |> mutate(dataset = "test")
 )
 ```
+
+Before examining missing values, the training and test datasets were combined into a single dataset. A placeholder TARGET column was added to the test set, and a dataset indicator was created to track the origin of each row. This setup ensures that missing value analysis can be performed consistently across both datasets.
 
 ```{r}
 #count NAs
 count_missings <- function(x) sum(is.na(x))
 
 missing_summary <- combined |>
-  summarize_all(count_missings) |>
-  pivot_longer(cols = everything(),
-               names_to = "column",
-               values_to = "missing") |>
-  filter(missing > 0)
+  select(-TARGET, -SK_ID_CURR) |>  # exclude TARGET and ID
+  summarize_all(~ sum(is.na(.))) |>
+  pivot_longer(
+    cols = everything(),
+    names_to = "Variable",
+    values_to = "Count"
+  ) |>
+  filter(Count > 0) |>
+  mutate(Proportion = round(Count / nrow(combined), 4)) |>
+  arrange(desc(Count))
 
-gt(missing_summary)
+gt(missing_summary) |>
+  tab_header(
+    title = "Missing Data Summary",
+  )
 ```
+
+47 variables included in the missing data summary share a common description: "Normalized information about building where the client lives, What is average (\_AVG suffix), modus (\_MODE suffix), median (\_MEDI suffix) apartment size, common area, living area, age of building, number of elevators, number of entrances, state of the building, number of floor." For these characteristics, NULL values can reasonably be interpreted as the feature being absent or not applicable. For example, a NULL in BASEMENTAREA_AVG likely indicates that the residence does not have a basement. Because the variables are normalized on a 0–1 scale, replacing NULLs with 0 is both intuitive and semantically meaningful: 0 effectively encodes “feature not present,” preserving the interpretation of the normalized score without introducing artificial averages.
+
+```{r}
+building_level_variables <- dict |>
+  filter(Table == "application_{train|test}.csv",
+         Description == "Normalized information about building where the client lives, What is average (_AVG suffix), modus (_MODE suffix), median (_MEDI suffix) apartment size, common area, living area, age of building, number of elevators, number of entrances, state of the building, number of floor") |>
+  pull(Row)
+
+missing_summary_2 <- combined |>
+  select(-TARGET, -SK_ID_CURR, -all_of(building_level_variables)) |>  # exclude TARGET, ID and building-level variables
+  summarize_all(~ sum(is.na(.))) |>
+  pivot_longer(
+    cols = everything(),
+    names_to = "Variable",
+    values_to = "Count"
+  ) |>
+  filter(Count > 0) |>
+  mutate(Proportion = round(Count / nrow(combined), 4)) |>
+  arrange(desc(Count))
+
+gt(missing_summary_2) |>
+  tab_header(
+    title = "Missing Data Summary",
+    subtitle = "Excluding the building-level variables",
+  )
+```
+
+Other variables in the summary, such as `OWN_CAR_AGE` (which indicates the age of the client's car), may be NULL because the client does not own a car. In such cases, NULL values should be replaced with 0.
+
+For variables where NULL represents genuinely missing information rather than the absence of a feature, missing values should be imputed to avoid losing information. Numeric variables should be imputed using the median, while categorical variables should use the most frequent value (mode).
+
+Variables with substantial missingness may be candidates for removal; however, some variables, such as `EXT_SOURCE_1`, are highly predictive of the target. In these cases, imputing missing values is preferable to dropping the variable, preserving its predictive value in modeling.
+
+## 4 - Data Problems
+
+### 4.1 - Normalized Variables
+
+```{r}
+# Select variables marked as normalized in the data dictionary
+normalized_tag <- dict |>
+  filter(Table == "application_{train|test}.csv",
+         Special == "normalized") |>
+  pull(Row)
+
+# Subset train
+normalized <- train |>
+  select(all_of(normalized_tag))
+
+# Check data types
+var_types <- sapply(normalized, class)
+var_types
+```
+
+Most variables labeled as “normalized” in the data dictionary are numeric and can be interpreted on a 0–1 scale. However, four of the 47 building-level variables, `FONDKAPREMONT_MODE`, `HOUSETYPE_MODE`, `WALLSMATERIAL_MODE`, and `EMERGENCYSTATE_MODE`, are actually categorical (character) variables, not numeric. These variables are therefore incorrectly labeled as “normalized.”
+
+Previously, it was suggested that all building-level variables have their NULLs imputed with 0. For these four categorical variables, however, imputing NULLs with 0 is inappropriate and would misrepresent the data. Missing values should instead be handled using mode imputation or other categorical encoding strategies to preserve their meaning.
+
+```{r}
+# Update Normalized Variables
+normalized <- normalized |>
+  select(-FONDKAPREMONT_MODE, 
+         -HOUSETYPE_MODE, 
+         -WALLSMATERIAL_MODE, 
+         -EMERGENCYSTATE_MODE)
+
+summary(normalized)
+```
+
+After excluding the four incorrectly labeled categorical variables, all remaining variables tagged as “normalized” are numeric and have observed values bounded between 0 and 1. This confirms that these variables are consistently scaled and that their normalization aligns with the data dictionary’s description.
+
+### 4.2 - Remaining Numeric Variables
+
+```{r}
+# all numeric variables (EXCLUDING normalized since they have been checked)
+numeric_error_check <- train |>
+  select(
+    where(is.numeric),
+    -TARGET,
+    -SK_ID_CURR,
+    -all_of(names(normalized))
+  )
+
+summary(numeric_error_check)
+```
+
+There are four `DAYS_` variables, which indicate the number of days an event happened relative to the loan application, so values are negative. However, `DAYS_EMPLOYED` contains nearly 55,000 rows equal to 365,243, which likely serve as placeholders for missing data.
+
+```{r}
+ggplot(train, aes(x = DAYS_EMPLOYED)) +
+  geom_histogram(bins = 150, fill = "steelblue", color = "white") +
+  labs(
+    title = "Distribution of `DAYS_EMPLOYED`",
+    x = "Days Employed (negative = before application)",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+
+For modeling, `DAYS_EMPLOYED` can be transformed so that 0 represents unemployment, with all other values converted to positive durations using the absolute value. This makes the variable easier to interpret, as it no longer measures time relative to the loan application. Other `DAYS_` variables could benefit from similar transformations; for example, `DAYS_BIRTH` can be converted into years by taking the absolute value and dividing by 365 to create an `AGE` variable.
+
+### 4.3 - Categorical
+
+```{r}
+categorical_summary <- train |>
+  select(where(is.character)) |>
+  pivot_longer(cols = everything(), names_to = "variable", values_to = "level") |>
+  group_by(variable, level) |>
+  summarise(n = n(), .groups = "drop") |>
+  arrange(variable, desc(n))
+
+gt(categorical_summary)
+```
+
+The dataset contains several variations of NULL or missing-like values, such as 'Unknown', 'XNA', and 'NA'. Additionally, some categorical levels are rare, such as 'Unemployed', 'Student', 'Businessman', and 'Maternity Leave' in `NAME_INCOME_TYPE`. While these categories may exhibit distinct default rates, their low frequency can lead to unstable estimates. As a result, rare levels may need to be grouped with similar categories or treated separately to avoid introducing noise or overfitting in downstream models.
+
+## 5 - Aggregate Additional Data
+
+```{r}
+# Load additional datasets
+pos_cash <- read_csv(file.path(data_dir, "POS_CASH_balance.csv"))
+bureau <- read_csv(file.path(data_dir, "bureau.csv"))
+bureau_balance <- read_csv(file.path(data_dir, "bureau_balance.csv"))
+cred_card <- read_csv(file.path(data_dir, "credit_card_balance.csv"))
+install <- read_csv(file.path(data_dir, "installments_payments.csv"))
+prev_app <- read_csv(file.path(data_dir, "previous_application.csv"))
+```
+
+These datasets provide additional information about clients’ financial histories beyond the primary application data. `POS_CASH` records track point-of-sale cash loans, the bureau datasets contain historical credit information from other lenders, credit card balances summarize revolving credit usage, previous applications detail past loan requests, and installment payments capture repayment patterns on prior loans.
+
+```{r}
+# Aggregate POS_CASH_balance per client to summarize loan counts, installments, and default metrics
+pos_cash_client <- pos_cash |>
+  group_by(SK_ID_CURR) |>
+  summarise(
+    POS_CASH_LOANS = n_distinct(SK_ID_PREV),
+    MONTHS_HISTORY = n(),
+    CNT_INSTALMENT_MEAN = mean(CNT_INSTALMENT, na.rm = TRUE),
+    CNT_INSTALMENT_FUTURE_MEAN = mean(CNT_INSTALMENT_FUTURE, na.rm = TRUE),
+    SK_DPD_MEAN = mean(SK_DPD, na.rm = TRUE),
+    SK_DPD_DEF_MEAN = mean(SK_DPD_DEF, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Aggregate bureau_balance per bureau credit, then summarize per client including credit counts, totals, and averages
+bureau_balance_agg <- bureau_balance |>
+  group_by(SK_ID_BUREAU) |>
+  summarise(
+    MONTHS_BUREAU = n(),
+    STATUS_MOST_COMMON = names(sort(table(STATUS), decreasing = TRUE))[1],
+    .groups = "drop"
+  )
+
+bureau_client <- bureau |>
+  left_join(bureau_balance_agg, by = "SK_ID_BUREAU") |>
+  group_by(SK_ID_CURR) |>
+  summarise(
+    BUREAU_CREDITS = n_distinct(SK_ID_BUREAU),
+    CREDIT_ACTIVE_COUNT = sum(CREDIT_ACTIVE == "Active", na.rm = TRUE),
+    AMT_CREDIT_SUM = sum(AMT_CREDIT_SUM, na.rm = TRUE),
+    AMT_CREDIT_SUM_OVERDUE = sum(AMT_CREDIT_SUM_OVERDUE, na.rm = TRUE),
+    AMT_CREDIT_MAX_OVERDUE = max(AMT_CREDIT_MAX_OVERDUE, na.rm = TRUE),
+    MONTHS_BUREAU_MEAN = mean(MONTHS_BUREAU, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Aggregate credit card balances per client to capture loan counts, balances, credit limits, payments, and default metrics
+cred_card_client <- cred_card |>
+  group_by(SK_ID_CURR) |>
+  summarise(
+    CC_LOANS = n_distinct(SK_ID_PREV),
+    MONTHS_CC = n(),
+    AMT_BALANCE_MEAN = mean(AMT_BALANCE, na.rm = TRUE),
+    AMT_CREDIT_LIMIT_MEAN = mean(AMT_CREDIT_LIMIT_ACTUAL, na.rm = TRUE),
+    AMT_PAYMENT_MEAN = mean(AMT_PAYMENT_CURRENT, na.rm = TRUE),
+    SK_DPD_MEAN = mean(SK_DPD, na.rm = TRUE),
+    SK_DPD_DEF_MEAN = mean(SK_DPD_DEF, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Aggregate previous applications per client to summarize number of applications, average amounts, and approval/refusal counts
+prev_app_client <- prev_app |>
+  group_by(SK_ID_CURR) |>
+  summarise(
+    NUM_PREV_APPS = n(),
+    AMT_APPLICATION_MEAN = mean(AMT_APPLICATION, na.rm = TRUE),
+    AMT_CREDIT_MEAN = mean(AMT_CREDIT, na.rm = TRUE),
+    NUM_APPROVED = sum(NAME_CONTRACT_STATUS == "Approved", na.rm = TRUE),
+    NUM_REFUSED = sum(NAME_CONTRACT_STATUS == "Refused", na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Aggregate installment payments per client to summarize total installments, payments, and average payment delays
+install_client <- install |>
+  group_by(SK_ID_CURR) |>
+  summarise(
+    NUM_INSTALLMENTS = n(),
+    AMT_INSTALMENT_TOTAL = sum(AMT_INSTALMENT, na.rm = TRUE),
+    AMT_PAYMENT_TOTAL = sum(AMT_PAYMENT, na.rm = TRUE),
+    DAYS_LATE_MEAN = mean(DAYS_ENTRY_PAYMENT - DAYS_INSTALMENT, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+Each additional dataset was aggregated to the client level (`SK_ID_CURR`) to summarize key financial behaviors, including counts of past loans and applications, average balances and credit limits, repayment patterns, delinquency measures, and approval outcomes, creating a comprehensive client-level view of historical financial activity.
+
+```{r}
+# Merge all client-level summaries
+train_augmented <- train |>
+  left_join(pos_cash_client, by = "SK_ID_CURR") |>
+  left_join(bureau_client, by = "SK_ID_CURR") |>
+  left_join(cred_card_client, by = "SK_ID_CURR") |>
+  left_join(prev_app_client, by = "SK_ID_CURR") |>
+  left_join(install_client, by = "SK_ID_CURR")
+
+test_augmented <- test |>
+  left_join(pos_cash_client, by = "SK_ID_CURR") |>
+  left_join(bureau_client, by = "SK_ID_CURR") |>
+  left_join(cred_card_client, by = "SK_ID_CURR") |>
+  left_join(prev_app_client, by = "SK_ID_CURR") |>
+  left_join(install_client, by = "SK_ID_CURR")
+```
+
+Now that all data has been aggregated to the client level, these aggregates are merged with the primary training and test datasets. This creates augmented datasets containing both application features and summarized historical financial behavior, enabling more comprehensive modeling of default risk.
+
+## 6 - Additional Correlation Analysis
+
+```{r}
+numeric_summary <- lapply(
+  names(train_augmented |> 
+          select(where(~ is.numeric(.) | is.integer(.)), -TARGET, -SK_ID_CURR)),
+  function(x) {
+    data.frame(
+      Predictor = x,
+      Correlation_with_Target = round(
+        cor(train_augmented[[x]], train_augmented$TARGET, use = "complete.obs"), 4
+      )
+    )
+  }
+) |> 
+  bind_rows() |>
+  arrange(desc(abs(Correlation_with_Target)))
+
+gt(numeric_summary)
+```
+
+The numeric variables with the highest correlation to the target variable are still `EXT_SOURCE_3`, `EXT_SOURCE_2`, and `EXT_SOURCE_1`; however, newly aggregated features such as `AMT_BALANCE_MEAN` and `MONTHS_BUREAU_MEAN` also exhibit notable correlations. `AMT_BALANCE_MEAN` captures the average outstanding balance on a client’s previous credit card accounts, while `MONTHS_BUREAU_MEAN` represents the average number of months of credit history per client, calculated from their individual bureau accounts.
+
+```{r}
+# Prepare data
+plot_data <- train_augmented |>
+  select(TARGET, AMT_BALANCE_MEAN, MONTHS_BUREAU_MEAN)
+
+# AMT_BALANCE_MEAN box plot
+ggplot(plot_data, aes(x = factor(TARGET), y = AMT_BALANCE_MEAN, fill = factor(TARGET))) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  scale_fill_manual(values = c("0" = "steelblue", "1" = "tomato")) +
+  labs(
+    title = "AMT_BALANCE_MEAN by Target",
+    x = "TARGET",
+    y = "AMT_BALANCE_MEAN"
+  ) +
+  theme_minimal()
+
+# MONTHS_BUREAU_MEAN box plot
+ggplot(plot_data, aes(x = factor(TARGET), y = MONTHS_BUREAU_MEAN, fill = factor(TARGET))) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  scale_fill_manual(values = c("0" = "darkgreen", "1" = "orange")) +
+  labs(
+    title = "MONTHS_BUREAU_MEAN by Target",
+    x = "TARGET",
+    y = "MONTHS_BUREAU_MEAN"
+  ) +
+  theme_minimal()
+```
+
+For `AMT_BALANCE_MEAN`, defaulted applicants (`TARGET` = 1) exhibit higher median balances and generally higher overall distributions compared to non-defaulted applicants (`TARGET` = 0). This pattern suggests a positive association between average credit card balances and loan default risk, indicating that clients carrying higher average balances are more likely to default.
+
+In contrast, for `MONTHS_BUREAU_MEAN`, non-defaulted applicants (`TARGET` = 0) show higher median values and overall distributions relative to defaulted applicants (`TARGET` = 1). This indicates a negative association between the average length of a client’s credit history reported to the bureau and default risk, with longer credit histories corresponding to lower likelihood of default.
+
+# Key Findings
+
+This exploratory analysis reveals that the dataset is highly imbalanced, with approximately 92% of applicants not defaulting, indicating that accuracy alone is not an appropriate evaluation metric. Strong relationships between the target and several predictors were identified, most notably the `EXT_SOURCE_` variables, where higher values are consistently associated with lower default risk. Among categorical predictors, `NAME_INCOME_TYPE` exhibits meaningful variation in default rates, particularly for categories such as "Unemployed" and "Maternity Leave."
+
+The analysis also highlights important data quality considerations. Missing values are widespread, especially among building-level features, and require context-dependent handling through zero imputation or median and mode replacement. Several variables labeled as normalized were found to be categorical, underscoring the need for careful data interpretation. Additionally, rare categorical levels may produce unstable estimates and should be evaluated thoughtfully in downstream modeling.
+
+Finally, incorporating aggregated transactional data provides additional predictive insight. Features derived from credit card balances and bureau history demonstrate meaningful associations with default risk, reinforcing the value of combining application-level data with historical financial behavior. Overall, this EDA identifies key predictors, data challenges, and feature opportunities that inform subsequent preprocessing and modeling decisions for loan default prediction.

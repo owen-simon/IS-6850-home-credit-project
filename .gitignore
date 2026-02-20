@@ -21,8 +21,8 @@ Thumbs.db
 *.xls
 *.json
 
-# Optional: keep small sample data files
-# !data/sample.csv
+# Test Environment
+Test_Environment.qmd
 
 # Build artifacts (if using build tools)
 dist/
