@@ -55,6 +55,36 @@ A majority-class model that always predicts non-default would achieve an accurac
 ## 2.1 - Numeric Variables
 
 ```{r}
+library(tidyverse)
+
+# Numeric correlations
+numeric_corr <- train |>
+  select(where(is.numeric), -TARGET) |>
+  summarise(across(everything(), ~ cor(.x, train$TARGET, use = "complete.obs"))) |>
+  pivot_longer(everything(), names_to = "Predictor", values_to = "Correlation") |>
+  arrange(desc(abs(Correlation)))
+
+gt(numeric_corr)
+
+```
+
+```{r}
+
+cat_vars <- train |> select(where(is.character)) |> names()
+
+categorical_corr <- purrr::map_dfr(cat_vars, function(var) {
+  df <- train |>
+    dplyr::count(.data[[var]], TARGET) |>
+    tidyr::pivot_wider(names_from = TARGET, values_from = n, values_fill = 0) |>
+    dplyr::mutate(Diff = abs(`1` / (`0` + `1`) - `0` / (`0` + `1`)))
+
+  tibble::tibble(Predictor = var, Max_Proportion_Diff = max(df$Diff, na.rm = TRUE))
+}) |>
+  dplyr::arrange(desc(Max_Proportion_Diff))
+
+```
+
+```{r}
 # Select Numeric Variables
 numeric_vars <- train |> select(where(is.numeric)) |>
 	select(-TARGET) |> 
