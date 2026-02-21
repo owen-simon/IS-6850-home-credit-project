@@ -18,10 +18,13 @@ execute:
 ```{r}
 # Load libraries
 library(tidyverse)
-library(caret)
 library(pROC)
-library(doParallel)
+library(glmnet)
+library(randomForest)
 library(gt)
+library(doParallel)
+
+options(na.action = na.pass)
 
 data_dir <- "data-files"
 
@@ -44,16 +47,15 @@ gt(TARGET_dist)
 ```
 
 ```{r}
-# Majority class predictions
+# Baseline predictions (majority class)
 baseline_predictions <- rep.int(0, nrow(train))
 baseline_accuracy <- mean(baseline_predictions == train$TARGET)
 
-# AUC Calculation
+# Baseline probabilities (probability of TARGET = 1)
 majority_class_prob <- TARGET_dist$proportion[TARGET_dist$TARGET == 0]
 baseline_probs <- rep(majority_class_prob, nrow(train))
-baseline_auc <- roc(train$TARGET, baseline_probs)$auc
 
-# Create results summary
+baseline_auc <- roc(train$TARGET, baseline_probs)$auc
 baseline_results <- tibble(
   Metric = c("Baseline Accuracy", "Baseline AUC"),
   Value = c(baseline_accuracy, as.numeric(baseline_auc))
@@ -75,14 +77,9 @@ raw_app_train <- read_csv(file.path(data_dir, "application_train.csv")) |>
 application_cols <- colnames(raw_app_train)
 application_cols_in_train <- intersect(application_cols, colnames(train))
 
-train_all <- train |>
+train_app <- train |>
   select(all_of(application_cols_in_train), TARGET, -SK_ID_CURR) |>
-  mutate(TARGET = factor(TARGET, levels = c(0, 1), labels = c("No", "Yes")))
-
-# Numeric predictors only for LASSO
-numeric_vars <- names(train_all)[sapply(train_all, is.numeric)]
-train_numeric <- train_all |>
-  select(all_of(numeric_vars), TARGET)
+  mutate(TARGET = factor(TARGET, levels = c(0,1)))
 ```
 
 The model comparison will focus on the original application data. Supplementary data sources (bureau, previous applications, etc.) will be explored in future iterations. The LASSO model will be trained using only numeric predictors.
@@ -91,74 +88,61 @@ The model comparison will focus on the original application data. Supplementary 
 
 ```{r}
 set.seed(42)
-ctrl <- trainControl(
-  method = "cv",
-  number = 5,
-  classProbs = TRUE,
-  summaryFunction = twoClassSummary,
-  savePredictions = "final"
-)
+n_folds <- 5
+fold_ids <- sample(rep(1:n_folds, length.out = nrow(train_app)))
+
+# Storage for fold predictions
+preds_lr <- numeric(nrow(train_app))
+preds_lasso <- numeric(nrow(train_app))
+preds_rf <- numeric(nrow(train_app))
+
+# Storage for number of predictors
+n_pred_lr <- n_pred_lasso <- n_pred_rf <- NA
 ```
 
 ## Enable Parallel Processing
 
 ```{r}
-n_cores <- max(1, parallel::detectCores() - 1)
+n_cores <- 2
 cl <- makePSOCKcluster(n_cores)
 registerDoParallel(cl)
 ```
 
 ## Modeling
 
-### Model 1: Logistic Regression (Full)
 
 ```{r}
-set.seed(42)
-model_lr <- train(
-  TARGET ~ .,
-  data = train_all,
-  method = "glm",
-  family = binomial,
-  trControl = ctrl,
-  metric = "ROC"
-)
-```
-
-### Model 2: LASSO Logistic Regression (Numeric Only)
-
-```{r}
-set.seed(42)
-
-model_lasso <- train(
-  TARGET ~ .,
-  data = train_numeric,
-  method = "glmnet",
-  family = "binomial",
-  trControl = ctrl,
-  metric = "ROC",
-  preProcess = c("center", "scale"),
-  tuneGrid = expand.grid(
-      alpha = c(0.5, 1),  # includes pure LASSO
-      lambda = 10^seq(-4, 0, length = 10)
-  )
-)
-```
-
-### Model 3: Random Forest (Full)
-
-```{r}
-set.seed(42)
-
-model_rf <- train(
-  TARGET ~ .,
-  data = train_all,
-  method = "rf",
-  trControl = ctrl,
-  metric = "ROC",
-  tuneGrid = data.frame(mtry = c(20, 30)),
-  ntree = 100, 
-  importance = TRUE
-)
+for (k in 1:n_folds) {
+  cat("Processing fold", k, "\n")
+  
+  train_fold <- train_app[fold_ids != k, ]
+  test_fold  <- train_app[fold_ids == k, ]
+  
+  # Logistic Regression
+  fit_lr <- glm(TARGET ~ ., data = train_fold, family = binomial)
+  preds_lr[fold_ids == k] <- predict(fit_lr, test_fold, type = "response")
+  if (is.na(n_pred_lr)) n_pred_lr <- length(coef(fit_lr)) - 1
+  
+  # LASSO Logistic Regression
+  x_train <- model.matrix(TARGET ~ . - 1, data = train_fold)
+  y_train <- as.numeric(train_fold$TARGET) - 1
+  x_test <- model.matrix(TARGET ~ . - 1, data = test_fold)
+  
+  lasso <- cv.glmnet(x_train, y_train, family = "binomial", alpha = 1, parallel = TRUE)
+  pred_lasso_fold <- predict(lasso, x_test, s = "lambda.min", type = "response")
+  preds_lasso[fold_ids == k] <- pred_lasso_fold
+  if (is.na(n_pred_lasso)) {
+    coefs <- coef(lasso, s = "lambda.min")
+    n_pred_lasso <- sum(coefs[-1, ] != 0)
+  }
+  
+  # Random Forest
+  set.seed(42 + k)
+  rf <- randomForest(TARGET ~ ., data = train_fold, ntree = 200)
+  pred_rf_fold <- predict(rf, test_fold, type = "prob")[, "1"]
+  preds_rf[fold_ids == k] <- pred_rf_fold
+  if (is.na(n_pred_rf)) n_pred_rf <- ncol(train_fold) - 1
+}
 ```
 
 ## Stop Parallel Cluster
@@ -170,23 +154,103 @@ registerDoSEQ()
 
 ## Model Comparison
 
+### Compute Cross-Validated AUC
+
 ```{r}
-model_comparison <- resamples(list(
-  "Logistic_Full" = model_lr,
-  "LASSO" = model_lasso,
-  "RandomForest" = model_rf
-))
+auc_lr <- auc(roc(train_app$TARGET, preds_lr))
+auc_lasso <- auc(roc(train_app$TARGET, preds_lasso))
+auc_rf <- auc(roc(train_app$TARGET, preds_rf))
 ```
 
-### Summary of Model Comparison
+### Candidate Model Summary Table
 
 ```{r}
-summary(model_comparison)
+comparison_table <- tibble(
+  Model = c("Logistic", "LASSO", "Random Forest"),
+  CV_AUC = c(auc_lr, auc_lasso, auc_rf),
+  Num_Predictors = c(n_pred_lr, n_pred_lasso, n_pred_rf)
+)
+
+gt(comparison_table)
 ```
 
-### Statistical Test of AUC Differences
+The LASSO model achieves the highest cross-validated AUC of the three models, followed closely by the Logistic Regression, then the Random Forest. The LASSO model also uses significantly fewer predictors than the standard Logistic Regression.
+
+# Model Optimization
+
+## Add Supplementary Data to LASSO Model
 
 ```{r}
-diff_results <- diff(model_comparison)
-summary(diff_results)
+# Ensure TARGET is properly formatted
+train$TARGET <- factor(train$TARGET, levels = c(0,1))
+
+# Remove ID column only
+train_full <- train |>
+  select(-SK_ID_CURR)
+
+# Create model matrix (dummy encode everything automatically)
+x_train <- model.matrix(TARGET ~ . - 1, data = train_full)
+y_train <- as.numeric(train_full$TARGET) - 1
+```
+
+## Fit LASSO Model with Full Data
+
+```{r}
+set.seed(42)
+final_lasso_full <- cv.glmnet(
+  x_train,
+  y_train,
+  family = "binomial",
+  alpha = 1,
+  parallel = TRUE
+)
+```
+
+## Prepare Full Test Set for Prediction
+
+```{r}
+test_full <- test_final |>
+  select(-SK_ID_CURR)
+
+x_test <- model.matrix(~ . - 1, data = test_full)
+```
+
+## Align Columns
+
+```{r}
+# Add missing columns in test
+missing_cols <- setdiff(colnames(x_train), colnames(x_test))
+
+if(length(missing_cols) > 0){
+  x_test <- cbind(
+    x_test,
+    matrix(0, nrow(x_test), length(missing_cols),
+           dimnames = list(NULL, missing_cols))
+  )
+}
+
+# Reorder to match training matrix
+x_test <- x_test[, colnames(x_train)]
+```
+
+## Generate Predictions on Test Set
+
+```{r}
+pred_test_full <- predict(
+  final_lasso_full,
+  x_test,
+  s = "lambda.min",
+  type = "response"
+)
+```
+
+## Create Submission File
+
+```{r}
+submission_full <- tibble(
+  SK_ID_CURR = test$SK_ID_CURR,
+  TARGET = as.numeric(pred_test_full)
+)
+
+write_csv(submission_full, "submission_lasso_full.csv")
 ```
