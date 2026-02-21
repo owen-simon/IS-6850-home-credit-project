@@ -23,6 +23,7 @@ library(glmnet)
 library(randomForest)
 library(gt)
 library(doParallel)
+library(caret)
 
 options(na.action = na.pass)
 
@@ -174,82 +175,54 @@ comparison_table <- tibble(
 gt(comparison_table)
 ```
 
-The LASSO model achieves the highest cross-validated AUC of the three models, followed closely by the Logistic Regression, then the Random Forest. The LASSO model also uses significantly fewer predictors than the standard Logistic Regression.
+We will use the LASSO model, because it achieved the highest cross-validated AUC of the three models, followed closely by the Logistic Regression, then the Random Forest. The LASSO model also used significantly fewer predictors than the full Logistic Regression model.
 
 # Model Optimization
 
-## Add Supplementary Data to LASSO Model
+## Add Supplementary Features to LASSO Model
 
 ```{r}
-# Ensure TARGET is properly formatted
-train$TARGET <- factor(train$TARGET, levels = c(0,1))
+# full training data (application + supplementary features)
+train_model <- train |> select(-SK_ID_CURR)
 
-# Remove ID column only
-train_full <- train |>
-  select(-SK_ID_CURR)
-
-# Create model matrix (dummy encode everything automatically)
-x_train <- model.matrix(TARGET ~ . - 1, data = train_full)
-y_train <- as.numeric(train_full$TARGET) - 1
+# recode TARGET levels
+train_model$TARGET <- factor(train_model$TARGET, levels = c(0,1), labels = c("No","Yes"))
 ```
 
-## Fit LASSO Model with Full Data
+## Fit LASSO Model with SMOTE
 
 ```{r}
+ctrl <- trainControl(
+  method = "cv",
+  number = 5,
+  sampling = "smote",            # address class imbalance
+  classProbs = TRUE,         
+  summaryFunction = twoClassSummary
+)
+
 set.seed(42)
-final_lasso_full <- cv.glmnet(
-  x_train,
-  y_train,
+lasso_caret <- train(
+  TARGET ~ .,
+  data = train_model,
+  method = "glmnet",
   family = "binomial",
-  alpha = 1,
-  parallel = TRUE
+  metric = "ROC",
+  trControl = ctrl
 )
 ```
 
-## Prepare Full Test Set for Prediction
-
+## Predict on Test Set 
 ```{r}
-test_full <- test_final |>
-  select(-SK_ID_CURR)
-
-x_test <- model.matrix(~ . - 1, data = test_full)
+## Predict on Test Set
+test_model <- test |> select(-SK_ID_CURR)
+pred_test_full <- predict(lasso_caret, newdata = test_model, type = "prob")[, "Yes"]
 ```
 
-## Align Columns
-
-```{r}
-# Add missing columns in test
-missing_cols <- setdiff(colnames(x_train), colnames(x_test))
-
-if(length(missing_cols) > 0){
-  x_test <- cbind(
-    x_test,
-    matrix(0, nrow(x_test), length(missing_cols),
-           dimnames = list(NULL, missing_cols))
-  )
-}
-
-# Reorder to match training matrix
-x_test <- x_test[, colnames(x_train)]
-```
-
-## Generate Predictions on Test Set
-
-```{r}
-pred_test_full <- predict(
-  final_lasso_full,
-  x_test,
-  s = "lambda.min",
-  type = "response"
-)
-```
-
-## Create Submission File
-
+# Create Submission File
 ```{r}
 submission_full <- tibble(
   SK_ID_CURR = test$SK_ID_CURR,
-  TARGET = as.numeric(pred_test_full)
+  TARGET = pred_test_full
 )
 
 write_csv(submission_full, "submission_lasso_full.csv")
