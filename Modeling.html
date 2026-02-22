@@ -2227,19 +2227,19 @@ vertical-align: -.125em;
   <li><a href="#candidate-model-summary-table" id="toc-candidate-model-summary-table" class="nav-link" data-scroll-target="#candidate-model-summary-table">3.6.2 Candidate Model Summary Table</a></li>
   </ul></li>
   </ul></li>
-  <li><a href="#model-optimization" id="toc-model-optimization" class="nav-link" data-scroll-target="#model-optimization">4. Model Optimization</a>
+  <li><a href="#predictor-set-expansion" id="toc-predictor-set-expansion" class="nav-link" data-scroll-target="#predictor-set-expansion">4. Predictor Set Expansion</a>
   <ul class="collapse">
   <li><a href="#add-supplementary-features" id="toc-add-supplementary-features" class="nav-link" data-scroll-target="#add-supplementary-features">4.1 Add Supplementary Features</a></li>
-  <li><a href="#fit-lasso-with-smote" id="toc-fit-lasso-with-smote" class="nav-link" data-scroll-target="#fit-lasso-with-smote">4.2 Fit LASSO with SMOTE</a></li>
-  <li><a href="#final-model-features" id="toc-final-model-features" class="nav-link" data-scroll-target="#final-model-features">4.3 Final Model Features</a>
+  <li><a href="#fold-cv-with-supplementary-features" id="toc-fold-cv-with-supplementary-features" class="nav-link" data-scroll-target="#fold-cv-with-supplementary-features">4.2 3-Fold CV With Supplementary Features</a></li>
+  <li><a href="#feature-set-comparison" id="toc-feature-set-comparison" class="nav-link" data-scroll-target="#feature-set-comparison">4.3 Feature Set Comparison</a></li>
+  </ul></li>
+  <li><a href="#model-optimization-using-full-feature-set" id="toc-model-optimization-using-full-feature-set" class="nav-link" data-scroll-target="#model-optimization-using-full-feature-set">5. Model Optimization Using Full Feature Set</a>
   <ul class="collapse">
-  <li><a href="#number-of-predictors-and-selected-features" id="toc-number-of-predictors-and-selected-features" class="nav-link" data-scroll-target="#number-of-predictors-and-selected-features">4.3.1 Number of Predictors and Selected Features</a></li>
-  <li><a href="#selected-features-table" id="toc-selected-features-table" class="nav-link" data-scroll-target="#selected-features-table">4.3.2 Selected Features Table</a></li>
+  <li><a href="#subsample-randomized-tuning" id="toc-subsample-randomized-tuning" class="nav-link" data-scroll-target="#subsample-randomized-tuning">5.1 Subsample + Randomized Tuning</a></li>
+  <li><a href="#final-model-5-fold-cv" id="toc-final-model-5-fold-cv" class="nav-link" data-scroll-target="#final-model-5-fold-cv">5.2 Final Model (5-Fold CV)</a></li>
   </ul></li>
-  <li><a href="#cross-validation-auc" id="toc-cross-validation-auc" class="nav-link" data-scroll-target="#cross-validation-auc">4.4 Cross-Validation AUC</a></li>
-  <li><a href="#predict-on-test-set-using-best-hyperparameters" id="toc-predict-on-test-set-using-best-hyperparameters" class="nav-link" data-scroll-target="#predict-on-test-set-using-best-hyperparameters">4.5 Predict on Test Set (Using Best Hyperparameters)</a></li>
-  </ul></li>
-  <li><a href="#create-submission-file" id="toc-create-submission-file" class="nav-link" data-scroll-target="#create-submission-file">5. Create Submission File</a></li>
+  <li><a href="#predict-on-test-set" id="toc-predict-on-test-set" class="nav-link" data-scroll-target="#predict-on-test-set">6. Predict on Test Set</a></li>
+  <li><a href="#create-submission-file" id="toc-create-submission-file" class="nav-link" data-scroll-target="#create-submission-file">7. Create Submission File</a></li>
   </ul>
 </nav>
 </div>
@@ -2308,20 +2308,20 @@ vertical-align: -.125em;
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">gt</span>(TARGET_dist)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div id="swmjgcjopo" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#swmjgcjopo table {
+<div id="gciepyflkf" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#gciepyflkf table {
 font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
 }
-#swmjgcjopo thead, #swmjgcjopo tbody, #swmjgcjopo tfoot, #swmjgcjopo tr, #swmjgcjopo td, #swmjgcjopo th {
+#gciepyflkf thead, #gciepyflkf tbody, #gciepyflkf tfoot, #gciepyflkf tr, #gciepyflkf td, #gciepyflkf th {
 border-style: none;
 }
-#swmjgcjopo p {
+#gciepyflkf p {
 margin: 0;
 padding: 0;
 }
-#swmjgcjopo .gt_table {
+#gciepyflkf .gt_table {
 display: table;
 border-collapse: collapse;
 line-height: normal;
@@ -2346,11 +2346,11 @@ border-left-style: none;
 border-left-width: 2px;
 border-left-color: #D3D3D3;
 }
-#swmjgcjopo .gt_caption {
+#gciepyflkf .gt_caption {
 padding-top: 4px;
 padding-bottom: 4px;
 }
-#swmjgcjopo .gt_title {
+#gciepyflkf .gt_title {
 color: #333333;
 font-size: 125%;
 font-weight: initial;
@@ -2361,7 +2361,7 @@ padding-right: 5px;
 border-bottom-color: #FFFFFF;
 border-bottom-width: 0;
 }
-#swmjgcjopo .gt_subtitle {
+#gciepyflkf .gt_subtitle {
 color: #333333;
 font-size: 85%;
 font-weight: initial;
@@ -2372,7 +2372,7 @@ padding-right: 5px;
 border-top-color: #FFFFFF;
 border-top-width: 0;
 }
-#swmjgcjopo .gt_heading {
+#gciepyflkf .gt_heading {
 background-color: #FFFFFF;
 text-align: center;
 border-bottom-color: #FFFFFF;
@@ -2383,12 +2383,12 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#swmjgcjopo .gt_bottom_border {
+#gciepyflkf .gt_bottom_border {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#swmjgcjopo .gt_col_headings {
+#gciepyflkf .gt_col_headings {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -2402,7 +2402,7 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#swmjgcjopo .gt_col_heading {
+#gciepyflkf .gt_col_heading {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2421,7 +2421,7 @@ padding-left: 5px;
 padding-right: 5px;
 overflow-x: hidden;
 }
-#swmjgcjopo .gt_column_spanner_outer {
+#gciepyflkf .gt_column_spanner_outer {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2432,13 +2432,13 @@ padding-bottom: 0;
 padding-left: 4px;
 padding-right: 4px;
 }
-#swmjgcjopo .gt_column_spanner_outer:first-child {
+#gciepyflkf .gt_column_spanner_outer:first-child {
 padding-left: 0;
 }
-#swmjgcjopo .gt_column_spanner_outer:last-child {
+#gciepyflkf .gt_column_spanner_outer:last-child {
 padding-right: 0;
 }
-#swmjgcjopo .gt_column_spanner {
+#gciepyflkf .gt_column_spanner {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
@@ -2449,10 +2449,10 @@ overflow-x: hidden;
 display: inline-block;
 width: 100%;
 }
-#swmjgcjopo .gt_spanner_row {
+#gciepyflkf .gt_spanner_row {
 border-bottom-style: hidden;
 }
-#swmjgcjopo .gt_group_heading {
+#gciepyflkf .gt_group_heading {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2477,7 +2477,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 text-align: left;
 }
-#swmjgcjopo .gt_empty_group_heading {
+#gciepyflkf .gt_empty_group_heading {
 padding: 0.5px;
 color: #333333;
 background-color: #FFFFFF;
@@ -2491,13 +2491,13 @@ border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 vertical-align: middle;
 }
-#swmjgcjopo .gt_from_md > :first-child {
+#gciepyflkf .gt_from_md > :first-child {
 margin-top: 0;
 }
-#swmjgcjopo .gt_from_md > :last-child {
+#gciepyflkf .gt_from_md > :last-child {
 margin-bottom: 0;
 }
-#swmjgcjopo .gt_row {
+#gciepyflkf .gt_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2515,7 +2515,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 overflow-x: hidden;
 }
-#swmjgcjopo .gt_stub {
+#gciepyflkf .gt_stub {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2527,7 +2527,7 @@ border-right-color: #D3D3D3;
 padding-left: 5px;
 padding-right: 5px;
 }
-#swmjgcjopo .gt_stub_row_group {
+#gciepyflkf .gt_stub_row_group {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2540,13 +2540,13 @@ padding-left: 5px;
 padding-right: 5px;
 vertical-align: top;
 }
-#swmjgcjopo .gt_row_group_first td {
+#gciepyflkf .gt_row_group_first td {
 border-top-width: 2px;
 }
-#swmjgcjopo .gt_row_group_first th {
+#gciepyflkf .gt_row_group_first th {
 border-top-width: 2px;
 }
-#swmjgcjopo .gt_summary_row {
+#gciepyflkf .gt_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -2555,14 +2555,14 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#swmjgcjopo .gt_first_summary_row {
+#gciepyflkf .gt_first_summary_row {
 border-top-style: solid;
 border-top-color: #D3D3D3;
 }
-#swmjgcjopo .gt_first_summary_row.thick {
+#gciepyflkf .gt_first_summary_row.thick {
 border-top-width: 2px;
 }
-#swmjgcjopo .gt_last_summary_row {
+#gciepyflkf .gt_last_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2571,7 +2571,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#swmjgcjopo .gt_grand_summary_row {
+#gciepyflkf .gt_grand_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -2580,7 +2580,7 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#swmjgcjopo .gt_first_grand_summary_row {
+#gciepyflkf .gt_first_grand_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2589,7 +2589,7 @@ border-top-style: double;
 border-top-width: 6px;
 border-top-color: #D3D3D3;
 }
-#swmjgcjopo .gt_last_grand_summary_row_top {
+#gciepyflkf .gt_last_grand_summary_row_top {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2598,10 +2598,10 @@ border-bottom-style: double;
 border-bottom-width: 6px;
 border-bottom-color: #D3D3D3;
 }
-#swmjgcjopo .gt_striped {
+#gciepyflkf .gt_striped {
 background-color: rgba(128, 128, 128, 0.05);
 }
-#swmjgcjopo .gt_table_body {
+#gciepyflkf .gt_table_body {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -2609,7 +2609,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#swmjgcjopo .gt_footnotes {
+#gciepyflkf .gt_footnotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -2622,7 +2622,7 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#swmjgcjopo .gt_footnote {
+#gciepyflkf .gt_footnote {
 margin: 0px;
 font-size: 90%;
 padding-top: 4px;
@@ -2630,7 +2630,7 @@ padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#swmjgcjopo .gt_sourcenotes {
+#gciepyflkf .gt_sourcenotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -2643,64 +2643,64 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#swmjgcjopo .gt_sourcenote {
+#gciepyflkf .gt_sourcenote {
 font-size: 90%;
 padding-top: 4px;
 padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#swmjgcjopo .gt_left {
+#gciepyflkf .gt_left {
 text-align: left;
 }
-#swmjgcjopo .gt_center {
+#gciepyflkf .gt_center {
 text-align: center;
 }
-#swmjgcjopo .gt_right {
+#gciepyflkf .gt_right {
 text-align: right;
 font-variant-numeric: tabular-nums;
 }
-#swmjgcjopo .gt_font_normal {
+#gciepyflkf .gt_font_normal {
 font-weight: normal;
 }
-#swmjgcjopo .gt_font_bold {
+#gciepyflkf .gt_font_bold {
 font-weight: bold;
 }
-#swmjgcjopo .gt_font_italic {
+#gciepyflkf .gt_font_italic {
 font-style: italic;
 }
-#swmjgcjopo .gt_super {
+#gciepyflkf .gt_super {
 font-size: 65%;
 }
-#swmjgcjopo .gt_footnote_marks {
+#gciepyflkf .gt_footnote_marks {
 font-size: 75%;
 vertical-align: 0.4em;
 position: initial;
 }
-#swmjgcjopo .gt_asterisk {
+#gciepyflkf .gt_asterisk {
 font-size: 100%;
 vertical-align: 0;
 }
-#swmjgcjopo .gt_indent_1 {
+#gciepyflkf .gt_indent_1 {
 text-indent: 5px;
 }
-#swmjgcjopo .gt_indent_2 {
+#gciepyflkf .gt_indent_2 {
 text-indent: 10px;
 }
-#swmjgcjopo .gt_indent_3 {
+#gciepyflkf .gt_indent_3 {
 text-indent: 15px;
 }
-#swmjgcjopo .gt_indent_4 {
+#gciepyflkf .gt_indent_4 {
 text-indent: 20px;
 }
-#swmjgcjopo .gt_indent_5 {
+#gciepyflkf .gt_indent_5 {
 text-indent: 25px;
 }
-#swmjgcjopo .katex-display {
+#gciepyflkf .katex-display {
 display: inline-flex !important;
 margin-bottom: 0.75em !important;
 }
-#swmjgcjopo div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#gciepyflkf div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
 height: 0px !important;
 }
 </style>
@@ -2740,10 +2740,10 @@ height: 0px !important;
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>baseline_accuracy <span class="ot">&lt;-</span> <span class="fu">mean</span>(baseline_predictions <span class="sc">==</span> train<span class="sc">$</span>TARGET)</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Baseline probabilities (probability of TARGET = 1)</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>majority_class_prob <span class="ot">&lt;-</span> TARGET_dist<span class="sc">$</span>proportion[TARGET_dist<span class="sc">$</span>TARGET <span class="sc">==</span> <span class="dv">0</span>]</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>baseline_probs <span class="ot">&lt;-</span> <span class="fu">rep</span>(majority_class_prob, <span class="fu">nrow</span>(train))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>positive_class_prob <span class="ot">&lt;-</span> TARGET_dist<span class="sc">$</span>proportion[TARGET_dist<span class="sc">$</span>TARGET <span class="sc">==</span> <span class="dv">1</span>]</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>baseline_probs <span class="ot">&lt;-</span> <span class="fu">rep</span>(positive_class_prob, <span class="fu">nrow</span>(train))</span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>baseline_auc <span class="ot">&lt;-</span> <span class="fu">roc</span>(train<span class="sc">$</span>TARGET, baseline_probs)<span class="sc">$</span>auc</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>baseline_auc <span class="ot">&lt;-</span> <span class="fu">roc</span>(train<span class="sc">$</span>TARGET, baseline_probs, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>))<span class="sc">$</span>auc</span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>baseline_results <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">Metric =</span> <span class="fu">c</span>(<span class="st">&quot;Baseline Accuracy&quot;</span>, <span class="st">&quot;Baseline AUC&quot;</span>),</span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">Value =</span> <span class="fu">c</span>(baseline_accuracy, <span class="fu">as.numeric</span>(baseline_auc))</span>
@@ -2751,20 +2751,20 @@ height: 0px !important;
 <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="fu">gt</span>(baseline_results)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div id="ehogckbbkk" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#ehogckbbkk table {
+<div id="ibkuvzfplb" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ibkuvzfplb table {
 font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
 }
-#ehogckbbkk thead, #ehogckbbkk tbody, #ehogckbbkk tfoot, #ehogckbbkk tr, #ehogckbbkk td, #ehogckbbkk th {
+#ibkuvzfplb thead, #ibkuvzfplb tbody, #ibkuvzfplb tfoot, #ibkuvzfplb tr, #ibkuvzfplb td, #ibkuvzfplb th {
 border-style: none;
 }
-#ehogckbbkk p {
+#ibkuvzfplb p {
 margin: 0;
 padding: 0;
 }
-#ehogckbbkk .gt_table {
+#ibkuvzfplb .gt_table {
 display: table;
 border-collapse: collapse;
 line-height: normal;
@@ -2789,11 +2789,11 @@ border-left-style: none;
 border-left-width: 2px;
 border-left-color: #D3D3D3;
 }
-#ehogckbbkk .gt_caption {
+#ibkuvzfplb .gt_caption {
 padding-top: 4px;
 padding-bottom: 4px;
 }
-#ehogckbbkk .gt_title {
+#ibkuvzfplb .gt_title {
 color: #333333;
 font-size: 125%;
 font-weight: initial;
@@ -2804,7 +2804,7 @@ padding-right: 5px;
 border-bottom-color: #FFFFFF;
 border-bottom-width: 0;
 }
-#ehogckbbkk .gt_subtitle {
+#ibkuvzfplb .gt_subtitle {
 color: #333333;
 font-size: 85%;
 font-weight: initial;
@@ -2815,7 +2815,7 @@ padding-right: 5px;
 border-top-color: #FFFFFF;
 border-top-width: 0;
 }
-#ehogckbbkk .gt_heading {
+#ibkuvzfplb .gt_heading {
 background-color: #FFFFFF;
 text-align: center;
 border-bottom-color: #FFFFFF;
@@ -2826,12 +2826,12 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#ehogckbbkk .gt_bottom_border {
+#ibkuvzfplb .gt_bottom_border {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#ehogckbbkk .gt_col_headings {
+#ibkuvzfplb .gt_col_headings {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -2845,7 +2845,7 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#ehogckbbkk .gt_col_heading {
+#ibkuvzfplb .gt_col_heading {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2864,7 +2864,7 @@ padding-left: 5px;
 padding-right: 5px;
 overflow-x: hidden;
 }
-#ehogckbbkk .gt_column_spanner_outer {
+#ibkuvzfplb .gt_column_spanner_outer {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2875,13 +2875,13 @@ padding-bottom: 0;
 padding-left: 4px;
 padding-right: 4px;
 }
-#ehogckbbkk .gt_column_spanner_outer:first-child {
+#ibkuvzfplb .gt_column_spanner_outer:first-child {
 padding-left: 0;
 }
-#ehogckbbkk .gt_column_spanner_outer:last-child {
+#ibkuvzfplb .gt_column_spanner_outer:last-child {
 padding-right: 0;
 }
-#ehogckbbkk .gt_column_spanner {
+#ibkuvzfplb .gt_column_spanner {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
@@ -2892,10 +2892,10 @@ overflow-x: hidden;
 display: inline-block;
 width: 100%;
 }
-#ehogckbbkk .gt_spanner_row {
+#ibkuvzfplb .gt_spanner_row {
 border-bottom-style: hidden;
 }
-#ehogckbbkk .gt_group_heading {
+#ibkuvzfplb .gt_group_heading {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2920,7 +2920,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 text-align: left;
 }
-#ehogckbbkk .gt_empty_group_heading {
+#ibkuvzfplb .gt_empty_group_heading {
 padding: 0.5px;
 color: #333333;
 background-color: #FFFFFF;
@@ -2934,13 +2934,13 @@ border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 vertical-align: middle;
 }
-#ehogckbbkk .gt_from_md > :first-child {
+#ibkuvzfplb .gt_from_md > :first-child {
 margin-top: 0;
 }
-#ehogckbbkk .gt_from_md > :last-child {
+#ibkuvzfplb .gt_from_md > :last-child {
 margin-bottom: 0;
 }
-#ehogckbbkk .gt_row {
+#ibkuvzfplb .gt_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -2958,7 +2958,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 overflow-x: hidden;
 }
-#ehogckbbkk .gt_stub {
+#ibkuvzfplb .gt_stub {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2970,7 +2970,7 @@ border-right-color: #D3D3D3;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ehogckbbkk .gt_stub_row_group {
+#ibkuvzfplb .gt_stub_row_group {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -2983,13 +2983,13 @@ padding-left: 5px;
 padding-right: 5px;
 vertical-align: top;
 }
-#ehogckbbkk .gt_row_group_first td {
+#ibkuvzfplb .gt_row_group_first td {
 border-top-width: 2px;
 }
-#ehogckbbkk .gt_row_group_first th {
+#ibkuvzfplb .gt_row_group_first th {
 border-top-width: 2px;
 }
-#ehogckbbkk .gt_summary_row {
+#ibkuvzfplb .gt_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -2998,14 +2998,14 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ehogckbbkk .gt_first_summary_row {
+#ibkuvzfplb .gt_first_summary_row {
 border-top-style: solid;
 border-top-color: #D3D3D3;
 }
-#ehogckbbkk .gt_first_summary_row.thick {
+#ibkuvzfplb .gt_first_summary_row.thick {
 border-top-width: 2px;
 }
-#ehogckbbkk .gt_last_summary_row {
+#ibkuvzfplb .gt_last_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3014,7 +3014,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#ehogckbbkk .gt_grand_summary_row {
+#ibkuvzfplb .gt_grand_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -3023,7 +3023,7 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ehogckbbkk .gt_first_grand_summary_row {
+#ibkuvzfplb .gt_first_grand_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3032,7 +3032,7 @@ border-top-style: double;
 border-top-width: 6px;
 border-top-color: #D3D3D3;
 }
-#ehogckbbkk .gt_last_grand_summary_row_top {
+#ibkuvzfplb .gt_last_grand_summary_row_top {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3041,10 +3041,10 @@ border-bottom-style: double;
 border-bottom-width: 6px;
 border-bottom-color: #D3D3D3;
 }
-#ehogckbbkk .gt_striped {
+#ibkuvzfplb .gt_striped {
 background-color: rgba(128, 128, 128, 0.05);
 }
-#ehogckbbkk .gt_table_body {
+#ibkuvzfplb .gt_table_body {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3052,7 +3052,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#ehogckbbkk .gt_footnotes {
+#ibkuvzfplb .gt_footnotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3065,7 +3065,7 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#ehogckbbkk .gt_footnote {
+#ibkuvzfplb .gt_footnote {
 margin: 0px;
 font-size: 90%;
 padding-top: 4px;
@@ -3073,7 +3073,7 @@ padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ehogckbbkk .gt_sourcenotes {
+#ibkuvzfplb .gt_sourcenotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3086,64 +3086,64 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#ehogckbbkk .gt_sourcenote {
+#ibkuvzfplb .gt_sourcenote {
 font-size: 90%;
 padding-top: 4px;
 padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ehogckbbkk .gt_left {
+#ibkuvzfplb .gt_left {
 text-align: left;
 }
-#ehogckbbkk .gt_center {
+#ibkuvzfplb .gt_center {
 text-align: center;
 }
-#ehogckbbkk .gt_right {
+#ibkuvzfplb .gt_right {
 text-align: right;
 font-variant-numeric: tabular-nums;
 }
-#ehogckbbkk .gt_font_normal {
+#ibkuvzfplb .gt_font_normal {
 font-weight: normal;
 }
-#ehogckbbkk .gt_font_bold {
+#ibkuvzfplb .gt_font_bold {
 font-weight: bold;
 }
-#ehogckbbkk .gt_font_italic {
+#ibkuvzfplb .gt_font_italic {
 font-style: italic;
 }
-#ehogckbbkk .gt_super {
+#ibkuvzfplb .gt_super {
 font-size: 65%;
 }
-#ehogckbbkk .gt_footnote_marks {
+#ibkuvzfplb .gt_footnote_marks {
 font-size: 75%;
 vertical-align: 0.4em;
 position: initial;
 }
-#ehogckbbkk .gt_asterisk {
+#ibkuvzfplb .gt_asterisk {
 font-size: 100%;
 vertical-align: 0;
 }
-#ehogckbbkk .gt_indent_1 {
+#ibkuvzfplb .gt_indent_1 {
 text-indent: 5px;
 }
-#ehogckbbkk .gt_indent_2 {
+#ibkuvzfplb .gt_indent_2 {
 text-indent: 10px;
 }
-#ehogckbbkk .gt_indent_3 {
+#ibkuvzfplb .gt_indent_3 {
 text-indent: 15px;
 }
-#ehogckbbkk .gt_indent_4 {
+#ibkuvzfplb .gt_indent_4 {
 text-indent: 20px;
 }
-#ehogckbbkk .gt_indent_5 {
+#ibkuvzfplb .gt_indent_5 {
 text-indent: 25px;
 }
-#ehogckbbkk .katex-display {
+#ibkuvzfplb .katex-display {
 display: inline-flex !important;
 margin-bottom: 0.75em !important;
 }
-#ehogckbbkk div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#ibkuvzfplb div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
 height: 0px !important;
 }
 </style>
@@ -3170,7 +3170,8 @@ height: 0px !important;
 </div>
 </div>
 </div>
-<p>A baseline model that always predicts the majority class would achieve an accuracy of around 91.9%. However, this model would have an AUC of 0.5, as it does not differentiate between the classes.</p>
+<p>A baseline model that always predicts the majority class achieves an accuracy of approximately 91.9% but an AUC of 0.5, indicating it cannot distinguish between the classes.</p>
+<p>This baseline provides a reference point for evaluating predictive models, which should outperform the simple majority-class classifier to demonstrate meaningful predictive power.</p>
 </section>
 </section>
 <section id="compare-candidate-models" class="level1">
@@ -3195,7 +3196,7 @@ height: 0px !important;
 <h2 class="anchored" data-anchor-id="cross-validation-control">3.2 Cross-Validation Control</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>n_folds <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>n_folds <span class="ot">&lt;-</span> <span class="dv">3</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fold_ids <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>n_folds, <span class="at">length.out =</span> <span class="fu">nrow</span>(train_app)))</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Storage for fold predictions</span></span>
@@ -3206,7 +3207,7 @@ height: 0px !important;
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Storage for number of predictors</span></span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>n_pred_lr <span class="ot">&lt;-</span> n_pred_lasso <span class="ot">&lt;-</span> n_pred_rf <span class="ot">&lt;-</span> <span class="cn">NA</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Five fold cross validation is used to estimate out of sample model performance. For each fold, models are trained on four fifths of the training data and evaluated on the remaining one fifth. This process ensures that performance metrics reflect generalization ability rather than training set fit.</p>
+<p>Three fold cross validation is used to estimate out of sample model performance. For each fold, models are trained on two thirds of the training data and evaluated on the remaining one third. This approach provides a reliable estimate of how the models are likely to perform on unseen data while balancing computation time.</p>
 </section>
 <section id="parallel-processing" class="level2">
 <h2 class="anchored" data-anchor-id="parallel-processing">3.3 Parallel Processing</h2>
@@ -3215,6 +3216,7 @@ height: 0px !important;
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">makePSOCKcluster</span>(n_cores)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">registerDoParallel</span>(cl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>We set up parallel processing to speed up model fitting across folds.</p>
 </section>
 <section id="modeling-folds" class="level2">
 <h2 class="anchored" data-anchor-id="modeling-folds">3.4 Modeling Folds</h2>
@@ -3253,11 +3255,10 @@ height: 0px !important;
 <div class="cell-output cell-output-stdout">
 <pre><code>Processing fold 1 
 Processing fold 2 
-Processing fold 3 
-Processing fold 4 
-Processing fold 5 </code></pre>
+Processing fold 3 </code></pre>
 </div>
 </div>
+<p>Each fold trains logistic regression, LASSO, and random forest models, storing out-of-fold predictions for unbiased AUC estimation.</p>
 </section>
 <section id="stop-parallel-cluster" class="level2">
 <h2 class="anchored" data-anchor-id="stop-parallel-cluster">3.5 Stop Parallel Cluster</h2>
@@ -3271,9 +3272,9 @@ Processing fold 5 </code></pre>
 <section id="compute-cv-auc" class="level3">
 <h3 class="anchored" data-anchor-id="compute-cv-auc">3.6.1 Compute CV-AUC</h3>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>auc_lr <span class="ot">&lt;-</span> <span class="fu">auc</span>(<span class="fu">roc</span>(train_app<span class="sc">$</span>TARGET, preds_lr))</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>auc_lasso <span class="ot">&lt;-</span> <span class="fu">auc</span>(<span class="fu">roc</span>(train_app<span class="sc">$</span>TARGET, preds_lasso))</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>auc_rf <span class="ot">&lt;-</span> <span class="fu">auc</span>(<span class="fu">roc</span>(train_app<span class="sc">$</span>TARGET, preds_rf))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>auc_lr <span class="ot">&lt;-</span> <span class="fu">auc</span>(<span class="fu">roc</span>(train_app<span class="sc">$</span>TARGET, preds_lr, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>)))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>auc_lasso_app <span class="ot">&lt;-</span> <span class="fu">auc</span>(<span class="fu">roc</span>(train_app<span class="sc">$</span>TARGET, preds_lasso, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>)))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>auc_rf <span class="ot">&lt;-</span> <span class="fu">auc</span>(<span class="fu">roc</span>(train_app<span class="sc">$</span>TARGET, preds_rf, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The reported AUC values are cross validated estimates computed from out of fold predictions. Because each observation is evaluated using a model that was not trained on it, these values provide an unbiased estimate of expected performance on unseen data.</p>
 </section>
@@ -3282,26 +3283,26 @@ Processing fold 5 </code></pre>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>comparison_table <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="fu">c</span>(<span class="st">&quot;Logistic&quot;</span>, <span class="st">&quot;LASSO&quot;</span>, <span class="st">&quot;Random Forest&quot;</span>),</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">CV_AUC =</span> <span class="fu">c</span>(auc_lr, auc_lasso, auc_rf),</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">CV_AUC =</span> <span class="fu">c</span>(auc_lr, auc_lasso_app, auc_rf),</span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Num_Predictors =</span> <span class="fu">c</span>(n_pred_lr, n_pred_lasso, n_pred_rf)</span>
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="fu">gt</span>(comparison_table)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div id="ufgrevtkua" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#ufgrevtkua table {
+<div id="ttlnetqwxo" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ttlnetqwxo table {
 font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
 }
-#ufgrevtkua thead, #ufgrevtkua tbody, #ufgrevtkua tfoot, #ufgrevtkua tr, #ufgrevtkua td, #ufgrevtkua th {
+#ttlnetqwxo thead, #ttlnetqwxo tbody, #ttlnetqwxo tfoot, #ttlnetqwxo tr, #ttlnetqwxo td, #ttlnetqwxo th {
 border-style: none;
 }
-#ufgrevtkua p {
+#ttlnetqwxo p {
 margin: 0;
 padding: 0;
 }
-#ufgrevtkua .gt_table {
+#ttlnetqwxo .gt_table {
 display: table;
 border-collapse: collapse;
 line-height: normal;
@@ -3326,11 +3327,11 @@ border-left-style: none;
 border-left-width: 2px;
 border-left-color: #D3D3D3;
 }
-#ufgrevtkua .gt_caption {
+#ttlnetqwxo .gt_caption {
 padding-top: 4px;
 padding-bottom: 4px;
 }
-#ufgrevtkua .gt_title {
+#ttlnetqwxo .gt_title {
 color: #333333;
 font-size: 125%;
 font-weight: initial;
@@ -3341,7 +3342,7 @@ padding-right: 5px;
 border-bottom-color: #FFFFFF;
 border-bottom-width: 0;
 }
-#ufgrevtkua .gt_subtitle {
+#ttlnetqwxo .gt_subtitle {
 color: #333333;
 font-size: 85%;
 font-weight: initial;
@@ -3352,7 +3353,7 @@ padding-right: 5px;
 border-top-color: #FFFFFF;
 border-top-width: 0;
 }
-#ufgrevtkua .gt_heading {
+#ttlnetqwxo .gt_heading {
 background-color: #FFFFFF;
 text-align: center;
 border-bottom-color: #FFFFFF;
@@ -3363,12 +3364,12 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#ufgrevtkua .gt_bottom_border {
+#ttlnetqwxo .gt_bottom_border {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#ufgrevtkua .gt_col_headings {
+#ttlnetqwxo .gt_col_headings {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3382,7 +3383,7 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#ufgrevtkua .gt_col_heading {
+#ttlnetqwxo .gt_col_heading {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3401,7 +3402,7 @@ padding-left: 5px;
 padding-right: 5px;
 overflow-x: hidden;
 }
-#ufgrevtkua .gt_column_spanner_outer {
+#ttlnetqwxo .gt_column_spanner_outer {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3412,13 +3413,13 @@ padding-bottom: 0;
 padding-left: 4px;
 padding-right: 4px;
 }
-#ufgrevtkua .gt_column_spanner_outer:first-child {
+#ttlnetqwxo .gt_column_spanner_outer:first-child {
 padding-left: 0;
 }
-#ufgrevtkua .gt_column_spanner_outer:last-child {
+#ttlnetqwxo .gt_column_spanner_outer:last-child {
 padding-right: 0;
 }
-#ufgrevtkua .gt_column_spanner {
+#ttlnetqwxo .gt_column_spanner {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
@@ -3429,10 +3430,10 @@ overflow-x: hidden;
 display: inline-block;
 width: 100%;
 }
-#ufgrevtkua .gt_spanner_row {
+#ttlnetqwxo .gt_spanner_row {
 border-bottom-style: hidden;
 }
-#ufgrevtkua .gt_group_heading {
+#ttlnetqwxo .gt_group_heading {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3457,7 +3458,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 text-align: left;
 }
-#ufgrevtkua .gt_empty_group_heading {
+#ttlnetqwxo .gt_empty_group_heading {
 padding: 0.5px;
 color: #333333;
 background-color: #FFFFFF;
@@ -3471,13 +3472,13 @@ border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 vertical-align: middle;
 }
-#ufgrevtkua .gt_from_md > :first-child {
+#ttlnetqwxo .gt_from_md > :first-child {
 margin-top: 0;
 }
-#ufgrevtkua .gt_from_md > :last-child {
+#ttlnetqwxo .gt_from_md > :last-child {
 margin-bottom: 0;
 }
-#ufgrevtkua .gt_row {
+#ttlnetqwxo .gt_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3495,7 +3496,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 overflow-x: hidden;
 }
-#ufgrevtkua .gt_stub {
+#ttlnetqwxo .gt_stub {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3507,7 +3508,7 @@ border-right-color: #D3D3D3;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ufgrevtkua .gt_stub_row_group {
+#ttlnetqwxo .gt_stub_row_group {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3520,13 +3521,13 @@ padding-left: 5px;
 padding-right: 5px;
 vertical-align: top;
 }
-#ufgrevtkua .gt_row_group_first td {
+#ttlnetqwxo .gt_row_group_first td {
 border-top-width: 2px;
 }
-#ufgrevtkua .gt_row_group_first th {
+#ttlnetqwxo .gt_row_group_first th {
 border-top-width: 2px;
 }
-#ufgrevtkua .gt_summary_row {
+#ttlnetqwxo .gt_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -3535,14 +3536,14 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ufgrevtkua .gt_first_summary_row {
+#ttlnetqwxo .gt_first_summary_row {
 border-top-style: solid;
 border-top-color: #D3D3D3;
 }
-#ufgrevtkua .gt_first_summary_row.thick {
+#ttlnetqwxo .gt_first_summary_row.thick {
 border-top-width: 2px;
 }
-#ufgrevtkua .gt_last_summary_row {
+#ttlnetqwxo .gt_last_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3551,7 +3552,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#ufgrevtkua .gt_grand_summary_row {
+#ttlnetqwxo .gt_grand_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -3560,7 +3561,7 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ufgrevtkua .gt_first_grand_summary_row {
+#ttlnetqwxo .gt_first_grand_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3569,7 +3570,7 @@ border-top-style: double;
 border-top-width: 6px;
 border-top-color: #D3D3D3;
 }
-#ufgrevtkua .gt_last_grand_summary_row_top {
+#ttlnetqwxo .gt_last_grand_summary_row_top {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3578,10 +3579,10 @@ border-bottom-style: double;
 border-bottom-width: 6px;
 border-bottom-color: #D3D3D3;
 }
-#ufgrevtkua .gt_striped {
+#ttlnetqwxo .gt_striped {
 background-color: rgba(128, 128, 128, 0.05);
 }
-#ufgrevtkua .gt_table_body {
+#ttlnetqwxo .gt_table_body {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3589,7 +3590,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#ufgrevtkua .gt_footnotes {
+#ttlnetqwxo .gt_footnotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3602,7 +3603,7 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#ufgrevtkua .gt_footnote {
+#ttlnetqwxo .gt_footnote {
 margin: 0px;
 font-size: 90%;
 padding-top: 4px;
@@ -3610,7 +3611,7 @@ padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ufgrevtkua .gt_sourcenotes {
+#ttlnetqwxo .gt_sourcenotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3623,64 +3624,64 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#ufgrevtkua .gt_sourcenote {
+#ttlnetqwxo .gt_sourcenote {
 font-size: 90%;
 padding-top: 4px;
 padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#ufgrevtkua .gt_left {
+#ttlnetqwxo .gt_left {
 text-align: left;
 }
-#ufgrevtkua .gt_center {
+#ttlnetqwxo .gt_center {
 text-align: center;
 }
-#ufgrevtkua .gt_right {
+#ttlnetqwxo .gt_right {
 text-align: right;
 font-variant-numeric: tabular-nums;
 }
-#ufgrevtkua .gt_font_normal {
+#ttlnetqwxo .gt_font_normal {
 font-weight: normal;
 }
-#ufgrevtkua .gt_font_bold {
+#ttlnetqwxo .gt_font_bold {
 font-weight: bold;
 }
-#ufgrevtkua .gt_font_italic {
+#ttlnetqwxo .gt_font_italic {
 font-style: italic;
 }
-#ufgrevtkua .gt_super {
+#ttlnetqwxo .gt_super {
 font-size: 65%;
 }
-#ufgrevtkua .gt_footnote_marks {
+#ttlnetqwxo .gt_footnote_marks {
 font-size: 75%;
 vertical-align: 0.4em;
 position: initial;
 }
-#ufgrevtkua .gt_asterisk {
+#ttlnetqwxo .gt_asterisk {
 font-size: 100%;
 vertical-align: 0;
 }
-#ufgrevtkua .gt_indent_1 {
+#ttlnetqwxo .gt_indent_1 {
 text-indent: 5px;
 }
-#ufgrevtkua .gt_indent_2 {
+#ttlnetqwxo .gt_indent_2 {
 text-indent: 10px;
 }
-#ufgrevtkua .gt_indent_3 {
+#ttlnetqwxo .gt_indent_3 {
 text-indent: 15px;
 }
-#ufgrevtkua .gt_indent_4 {
+#ttlnetqwxo .gt_indent_4 {
 text-indent: 20px;
 }
-#ufgrevtkua .gt_indent_5 {
+#ttlnetqwxo .gt_indent_5 {
 text-indent: 25px;
 }
-#ufgrevtkua .katex-display {
+#ttlnetqwxo .katex-display {
 display: inline-flex !important;
 margin-bottom: 0.75em !important;
 }
-#ufgrevtkua div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#ttlnetqwxo div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
 height: 0px !important;
 }
 </style>
@@ -3696,17 +3697,17 @@ height: 0px !important;
 <tbody class="gt_table_body">
 <tr class="odd">
 <td class="gt_row gt_left" headers="Model">Logistic</td>
-<td class="gt_row gt_right" headers="CV_AUC">0.7457222</td>
+<td class="gt_row gt_right" headers="CV_AUC">0.7456588</td>
 <td class="gt_row gt_right" headers="Num_Predictors">158</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="Model">LASSO</td>
-<td class="gt_row gt_right" headers="CV_AUC">0.7460022</td>
-<td class="gt_row gt_right" headers="Num_Predictors">126</td>
+<td class="gt_row gt_right" headers="CV_AUC">0.7458623</td>
+<td class="gt_row gt_right" headers="Num_Predictors">120</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Model">Random Forest</td>
-<td class="gt_row gt_right" headers="CV_AUC">0.7199946</td>
+<td class="gt_row gt_right" headers="CV_AUC">0.7186058</td>
 <td class="gt_row gt_right" headers="Num_Predictors">120</td>
 </tr>
 </tbody>
@@ -3719,164 +3720,70 @@ height: 0px !important;
 </section>
 </section>
 </section>
-<section id="model-optimization" class="level1">
-<h1>4. Model Optimization</h1>
+<section id="predictor-set-expansion" class="level1">
+<h1>4. Predictor Set Expansion</h1>
 <section id="add-supplementary-features" class="level2">
 <h2 class="anchored" data-anchor-id="add-supplementary-features">4.1 Add Supplementary Features</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># full training data (application + supplementary features)</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>train_model <span class="ot">&lt;-</span> train <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>SK_ID_CURR)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># recode TARGET levels</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>train_model<span class="sc">$</span>TARGET <span class="ot">&lt;-</span> <span class="fu">factor</span>(train_model<span class="sc">$</span>TARGET, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Yes&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>train_full <span class="ot">&lt;-</span> train <span class="sc">|&gt;</span> </span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>SK_ID_CURR) <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">TARGET =</span> <span class="fu">factor</span>(TARGET, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now, the model will be trained on the full feature set, including both the original application variables and the newly added aggregated features, to leverage all available information for optimal predictive performance.</p>
+</section>
+<section id="fold-cv-with-supplementary-features" class="level2">
+<h2 class="anchored" data-anchor-id="fold-cv-with-supplementary-features">4.2 3-Fold CV With Supplementary Features</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>fold_ids_full <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>n_folds, <span class="at">length.out =</span> <span class="fu">nrow</span>(train_full)))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>preds_lasso_full <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="fu">nrow</span>(train_full))</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_folds) {</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  train_fold <span class="ot">&lt;-</span> train_full[fold_ids_full <span class="sc">!=</span> k, ]</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  test_fold  <span class="ot">&lt;-</span> train_full[fold_ids_full <span class="sc">==</span> k, ]</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  x_train <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(TARGET <span class="sc">~</span> . <span class="sc">-</span> <span class="dv">1</span>, <span class="at">data =</span> train_fold)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  y_train <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(train_fold<span class="sc">$</span>TARGET) <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  x_test  <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(TARGET <span class="sc">~</span> . <span class="sc">-</span> <span class="dv">1</span>, <span class="at">data =</span> test_fold)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  lasso <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(x_train, y_train, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>, <span class="at">alpha =</span> <span class="dv">1</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  preds_lasso_full[fold_ids_full <span class="sc">==</span> k] <span class="ot">&lt;-</span> </span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">predict</span>(lasso, x_test, <span class="at">s =</span> <span class="st">&quot;lambda.min&quot;</span>, <span class="at">type =</span> <span class="st">&quot;response&quot;</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>auc_lasso_full <span class="ot">&lt;-</span> <span class="fu">auc</span>(<span class="fu">roc</span>(train_full<span class="sc">$</span>TARGET, preds_lasso_full, <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>)))</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>auc_lasso_full</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Area under the curve: 0.7693</code></pre>
+</div>
 </div>
 </section>
-<section id="fit-lasso-with-smote" class="level2">
-<h2 class="anchored" data-anchor-id="fit-lasso-with-smote">4.2 Fit LASSO with SMOTE</h2>
+<section id="feature-set-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="feature-set-comparison">4.3 Feature Set Comparison</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a grid for lambda (regularization) and alpha (mix between lasso/ridge)</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>grid <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">by =</span> <span class="fl">0.2</span>),</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda =</span> <span class="dv">10</span><span class="sc">^</span><span class="fu">seq</span>(<span class="sc">-</span><span class="dv">4</span>, <span class="dv">0</span>, <span class="at">length =</span> <span class="dv">20</span>)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>ctrl <span class="ot">&lt;-</span> <span class="fu">trainControl</span>(</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;cv&quot;</span>,</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">number =</span> <span class="dv">5</span>,</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">sampling =</span> <span class="st">&quot;smote&quot;</span>,            <span class="co"># handle class imbalance</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">classProbs =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">summaryFunction =</span> twoClassSummary,</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">verboseIter =</span> <span class="cn">TRUE</span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>lasso_caret <span class="ot">&lt;-</span> <span class="fu">train</span>(</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  TARGET <span class="sc">~</span> .,</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> train_model,</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;glmnet&quot;</span>,</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>,</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="st">&quot;ROC&quot;</span>,</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">trControl =</span> ctrl,</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">tuneGrid =</span> grid</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>+ Fold1: alpha=0.0, lambda=1 </code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>- Fold1: alpha=0.0, lambda=1 
-+ Fold1: alpha=0.2, lambda=1 
-- Fold1: alpha=0.2, lambda=1 
-+ Fold1: alpha=0.4, lambda=1 
-- Fold1: alpha=0.4, lambda=1 
-+ Fold1: alpha=0.6, lambda=1 
-- Fold1: alpha=0.6, lambda=1 
-+ Fold1: alpha=0.8, lambda=1 
-- Fold1: alpha=0.8, lambda=1 
-+ Fold1: alpha=1.0, lambda=1 
-- Fold1: alpha=1.0, lambda=1 
-+ Fold2: alpha=0.0, lambda=1 
-- Fold2: alpha=0.0, lambda=1 
-+ Fold2: alpha=0.2, lambda=1 
-- Fold2: alpha=0.2, lambda=1 
-+ Fold2: alpha=0.4, lambda=1 
-- Fold2: alpha=0.4, lambda=1 
-+ Fold2: alpha=0.6, lambda=1 
-- Fold2: alpha=0.6, lambda=1 
-+ Fold2: alpha=0.8, lambda=1 
-- Fold2: alpha=0.8, lambda=1 
-+ Fold2: alpha=1.0, lambda=1 
-- Fold2: alpha=1.0, lambda=1 
-+ Fold3: alpha=0.0, lambda=1 
-- Fold3: alpha=0.0, lambda=1 
-+ Fold3: alpha=0.2, lambda=1 
-- Fold3: alpha=0.2, lambda=1 
-+ Fold3: alpha=0.4, lambda=1 
-- Fold3: alpha=0.4, lambda=1 
-+ Fold3: alpha=0.6, lambda=1 
-- Fold3: alpha=0.6, lambda=1 
-+ Fold3: alpha=0.8, lambda=1 
-- Fold3: alpha=0.8, lambda=1 
-+ Fold3: alpha=1.0, lambda=1 
-- Fold3: alpha=1.0, lambda=1 
-+ Fold4: alpha=0.0, lambda=1 
-- Fold4: alpha=0.0, lambda=1 
-+ Fold4: alpha=0.2, lambda=1 
-- Fold4: alpha=0.2, lambda=1 
-+ Fold4: alpha=0.4, lambda=1 
-- Fold4: alpha=0.4, lambda=1 
-+ Fold4: alpha=0.6, lambda=1 
-- Fold4: alpha=0.6, lambda=1 
-+ Fold4: alpha=0.8, lambda=1 
-- Fold4: alpha=0.8, lambda=1 
-+ Fold4: alpha=1.0, lambda=1 
-- Fold4: alpha=1.0, lambda=1 
-+ Fold5: alpha=0.0, lambda=1 
-- Fold5: alpha=0.0, lambda=1 
-+ Fold5: alpha=0.2, lambda=1 
-- Fold5: alpha=0.2, lambda=1 
-+ Fold5: alpha=0.4, lambda=1 
-- Fold5: alpha=0.4, lambda=1 
-+ Fold5: alpha=0.6, lambda=1 
-- Fold5: alpha=0.6, lambda=1 
-+ Fold5: alpha=0.8, lambda=1 
-- Fold5: alpha=0.8, lambda=1 
-+ Fold5: alpha=1.0, lambda=1 
-- Fold5: alpha=1.0, lambda=1 
-Aggregating results
-Selecting tuning parameters
-Fitting alpha = 1, lambda = 1e-04 on full training set</code></pre>
-</div>
-</div>
-<p>Hyperparameter tuning explores combinations of alpha and lambda using five fold cross validation on the training data. The value of alpha controls the balance between ridge and LASSO penalties, while lambda controls the overall strength of regularization. The optimal combination is selected based on cross validated ROC AUC. After tuning is complete, the final model is automatically refit on the full training dataset using the selected hyperparameters.</p>
-<p>SMOTE is applied within each cross validation fold to address class imbalance. Synthetic minority class observations are generated only within the training portion of each fold, preventing information leakage into validation data and improving the model’s ability to distinguish between classes.</p>
-</section>
-<section id="final-model-features" class="level2">
-<h2 class="anchored" data-anchor-id="final-model-features">4.3 Final Model Features</h2>
-<p>The final tuned LASSO model is refit on the full training dataset using the optimal hyperparameters selected during cross validation. The resulting coefficient estimates determine which predictors are retained in the final model.</p>
-<section id="number-of-predictors-and-selected-features" class="level3">
-<h3 class="anchored" data-anchor-id="number-of-predictors-and-selected-features">4.3.1 Number of Predictors and Selected Features</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract coefficients at best lambda</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>coef_lasso <span class="ot">&lt;-</span> <span class="fu">coef</span>(lasso_caret<span class="sc">$</span>finalModel, <span class="at">s =</span> lasso_caret<span class="sc">$</span>bestTune<span class="sc">$</span>lambda)</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Number of predictors (non-zero coefficients)</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>num_predictors <span class="ot">&lt;-</span> <span class="fu">sum</span>(coef_lasso <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">-</span> <span class="dv">1</span>  <span class="co"># subtract intercept</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>num_predictors</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 205</code></pre>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Selected predictor names</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>selected_vars <span class="ot">&lt;-</span> <span class="fu">rownames</span>(coef_lasso)[coef_lasso[,<span class="dv">1</span>] <span class="sc">!=</span> <span class="dv">0</span>]</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>selected_vars <span class="ot">&lt;-</span> selected_vars[selected_vars <span class="sc">!=</span> <span class="st">&quot;(Intercept)&quot;</span>]</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Display selected features in a table</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>selected_vars_table <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Selected_Feature =</span> selected_vars</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="selected-features-table" class="level3">
-<h3 class="anchored" data-anchor-id="selected-features-table">4.3.2 Selected Features Table</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gt</span>(selected_vars_table) <span class="sc">|&gt;</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_header</span>(</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Features Selected by Final LASSO Model&quot;</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>feature_comparison <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Feature_Set =</span> <span class="fu">c</span>(<span class="st">&quot;Application Only&quot;</span>, <span class="st">&quot;Application + Supplementary&quot;</span>),</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">CV_AUC =</span> <span class="fu">c</span>(auc_lasso_app, auc_lasso_full)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">gt</span>(feature_comparison)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
-<div id="xgibpknzaa" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#xgibpknzaa table {
+<div id="gfbguzqysk" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#gfbguzqysk table {
 font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
 }
-#xgibpknzaa thead, #xgibpknzaa tbody, #xgibpknzaa tfoot, #xgibpknzaa tr, #xgibpknzaa td, #xgibpknzaa th {
+#gfbguzqysk thead, #gfbguzqysk tbody, #gfbguzqysk tfoot, #gfbguzqysk tr, #gfbguzqysk td, #gfbguzqysk th {
 border-style: none;
 }
-#xgibpknzaa p {
+#gfbguzqysk p {
 margin: 0;
 padding: 0;
 }
-#xgibpknzaa .gt_table {
+#gfbguzqysk .gt_table {
 display: table;
 border-collapse: collapse;
 line-height: normal;
@@ -3901,11 +3808,11 @@ border-left-style: none;
 border-left-width: 2px;
 border-left-color: #D3D3D3;
 }
-#xgibpknzaa .gt_caption {
+#gfbguzqysk .gt_caption {
 padding-top: 4px;
 padding-bottom: 4px;
 }
-#xgibpknzaa .gt_title {
+#gfbguzqysk .gt_title {
 color: #333333;
 font-size: 125%;
 font-weight: initial;
@@ -3916,7 +3823,7 @@ padding-right: 5px;
 border-bottom-color: #FFFFFF;
 border-bottom-width: 0;
 }
-#xgibpknzaa .gt_subtitle {
+#gfbguzqysk .gt_subtitle {
 color: #333333;
 font-size: 85%;
 font-weight: initial;
@@ -3927,7 +3834,7 @@ padding-right: 5px;
 border-top-color: #FFFFFF;
 border-top-width: 0;
 }
-#xgibpknzaa .gt_heading {
+#gfbguzqysk .gt_heading {
 background-color: #FFFFFF;
 text-align: center;
 border-bottom-color: #FFFFFF;
@@ -3938,12 +3845,12 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#xgibpknzaa .gt_bottom_border {
+#gfbguzqysk .gt_bottom_border {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#xgibpknzaa .gt_col_headings {
+#gfbguzqysk .gt_col_headings {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3957,7 +3864,7 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#xgibpknzaa .gt_col_heading {
+#gfbguzqysk .gt_col_heading {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3976,7 +3883,7 @@ padding-left: 5px;
 padding-right: 5px;
 overflow-x: hidden;
 }
-#xgibpknzaa .gt_column_spanner_outer {
+#gfbguzqysk .gt_column_spanner_outer {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3987,13 +3894,13 @@ padding-bottom: 0;
 padding-left: 4px;
 padding-right: 4px;
 }
-#xgibpknzaa .gt_column_spanner_outer:first-child {
+#gfbguzqysk .gt_column_spanner_outer:first-child {
 padding-left: 0;
 }
-#xgibpknzaa .gt_column_spanner_outer:last-child {
+#gfbguzqysk .gt_column_spanner_outer:last-child {
 padding-right: 0;
 }
-#xgibpknzaa .gt_column_spanner {
+#gfbguzqysk .gt_column_spanner {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
@@ -4004,10 +3911,10 @@ overflow-x: hidden;
 display: inline-block;
 width: 100%;
 }
-#xgibpknzaa .gt_spanner_row {
+#gfbguzqysk .gt_spanner_row {
 border-bottom-style: hidden;
 }
-#xgibpknzaa .gt_group_heading {
+#gfbguzqysk .gt_group_heading {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -4032,7 +3939,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 text-align: left;
 }
-#xgibpknzaa .gt_empty_group_heading {
+#gfbguzqysk .gt_empty_group_heading {
 padding: 0.5px;
 color: #333333;
 background-color: #FFFFFF;
@@ -4046,13 +3953,13 @@ border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 vertical-align: middle;
 }
-#xgibpknzaa .gt_from_md > :first-child {
+#gfbguzqysk .gt_from_md > :first-child {
 margin-top: 0;
 }
-#xgibpknzaa .gt_from_md > :last-child {
+#gfbguzqysk .gt_from_md > :last-child {
 margin-bottom: 0;
 }
-#xgibpknzaa .gt_row {
+#gfbguzqysk .gt_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -4070,7 +3977,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 overflow-x: hidden;
 }
-#xgibpknzaa .gt_stub {
+#gfbguzqysk .gt_stub {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -4082,7 +3989,7 @@ border-right-color: #D3D3D3;
 padding-left: 5px;
 padding-right: 5px;
 }
-#xgibpknzaa .gt_stub_row_group {
+#gfbguzqysk .gt_stub_row_group {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -4095,13 +4002,13 @@ padding-left: 5px;
 padding-right: 5px;
 vertical-align: top;
 }
-#xgibpknzaa .gt_row_group_first td {
+#gfbguzqysk .gt_row_group_first td {
 border-top-width: 2px;
 }
-#xgibpknzaa .gt_row_group_first th {
+#gfbguzqysk .gt_row_group_first th {
 border-top-width: 2px;
 }
-#xgibpknzaa .gt_summary_row {
+#gfbguzqysk .gt_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -4110,14 +4017,14 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#xgibpknzaa .gt_first_summary_row {
+#gfbguzqysk .gt_first_summary_row {
 border-top-style: solid;
 border-top-color: #D3D3D3;
 }
-#xgibpknzaa .gt_first_summary_row.thick {
+#gfbguzqysk .gt_first_summary_row.thick {
 border-top-width: 2px;
 }
-#xgibpknzaa .gt_last_summary_row {
+#gfbguzqysk .gt_last_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -4126,7 +4033,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#xgibpknzaa .gt_grand_summary_row {
+#gfbguzqysk .gt_grand_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -4135,7 +4042,7 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#xgibpknzaa .gt_first_grand_summary_row {
+#gfbguzqysk .gt_first_grand_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -4144,7 +4051,7 @@ border-top-style: double;
 border-top-width: 6px;
 border-top-color: #D3D3D3;
 }
-#xgibpknzaa .gt_last_grand_summary_row_top {
+#gfbguzqysk .gt_last_grand_summary_row_top {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -4153,10 +4060,10 @@ border-bottom-style: double;
 border-bottom-width: 6px;
 border-bottom-color: #D3D3D3;
 }
-#xgibpknzaa .gt_striped {
+#gfbguzqysk .gt_striped {
 background-color: rgba(128, 128, 128, 0.05);
 }
-#xgibpknzaa .gt_table_body {
+#gfbguzqysk .gt_table_body {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -4164,7 +4071,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#xgibpknzaa .gt_footnotes {
+#gfbguzqysk .gt_footnotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -4177,7 +4084,7 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#xgibpknzaa .gt_footnote {
+#gfbguzqysk .gt_footnote {
 margin: 0px;
 font-size: 90%;
 padding-top: 4px;
@@ -4185,7 +4092,7 @@ padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#xgibpknzaa .gt_sourcenotes {
+#gfbguzqysk .gt_sourcenotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -4198,692 +4105,83 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#xgibpknzaa .gt_sourcenote {
+#gfbguzqysk .gt_sourcenote {
 font-size: 90%;
 padding-top: 4px;
 padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#xgibpknzaa .gt_left {
+#gfbguzqysk .gt_left {
 text-align: left;
 }
-#xgibpknzaa .gt_center {
+#gfbguzqysk .gt_center {
 text-align: center;
 }
-#xgibpknzaa .gt_right {
+#gfbguzqysk .gt_right {
 text-align: right;
 font-variant-numeric: tabular-nums;
 }
-#xgibpknzaa .gt_font_normal {
+#gfbguzqysk .gt_font_normal {
 font-weight: normal;
 }
-#xgibpknzaa .gt_font_bold {
+#gfbguzqysk .gt_font_bold {
 font-weight: bold;
 }
-#xgibpknzaa .gt_font_italic {
+#gfbguzqysk .gt_font_italic {
 font-style: italic;
 }
-#xgibpknzaa .gt_super {
+#gfbguzqysk .gt_super {
 font-size: 65%;
 }
-#xgibpknzaa .gt_footnote_marks {
+#gfbguzqysk .gt_footnote_marks {
 font-size: 75%;
 vertical-align: 0.4em;
 position: initial;
 }
-#xgibpknzaa .gt_asterisk {
+#gfbguzqysk .gt_asterisk {
 font-size: 100%;
 vertical-align: 0;
 }
-#xgibpknzaa .gt_indent_1 {
+#gfbguzqysk .gt_indent_1 {
 text-indent: 5px;
 }
-#xgibpknzaa .gt_indent_2 {
+#gfbguzqysk .gt_indent_2 {
 text-indent: 10px;
 }
-#xgibpknzaa .gt_indent_3 {
+#gfbguzqysk .gt_indent_3 {
 text-indent: 15px;
 }
-#xgibpknzaa .gt_indent_4 {
+#gfbguzqysk .gt_indent_4 {
 text-indent: 20px;
 }
-#xgibpknzaa .gt_indent_5 {
+#gfbguzqysk .gt_indent_5 {
 text-indent: 25px;
 }
-#xgibpknzaa .katex-display {
+#gfbguzqysk .katex-display {
 display: inline-flex !important;
 margin-bottom: 0.75em !important;
 }
-#xgibpknzaa div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#gfbguzqysk div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
 height: 0px !important;
 }
 </style>
 
 <table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
 <thead>
-<tr class="gt_heading header">
-<td class="gt_heading gt_title gt_font_normal gt_bottom_border">Features Selected by Final LASSO Model</td>
-</tr>
-<tr class="gt_col_headings even">
-<th id="Selected_Feature" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Selected_Feature</th>
+<tr class="gt_col_headings header">
+<th id="Feature_Set" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Feature_Set</th>
+<th id="CV_AUC" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">CV_AUC</th>
 </tr>
 </thead>
 <tbody class="gt_table_body">
 <tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_CONTRACT_TYPERevolving loans</td>
+<td class="gt_row gt_left" headers="Feature_Set">Application Only</td>
+<td class="gt_row gt_right" headers="CV_AUC">0.7458623</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">CODE_GENDERM</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_OWN_CARY</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_OWN_REALTYY</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_INCOME_TOTAL</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_CREDIT</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_ANNUITY</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_GOODS_PRICE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_TYPE_SUITEFamily</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_TYPE_SUITEOther</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_TYPE_SUITESpouse, partner</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_TYPE_SUITEUnaccompanied</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_INCOME_TYPEOther</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_INCOME_TYPEPensioner</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_INCOME_TYPEState servant</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_INCOME_TYPEWorking</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_EDUCATION_TYPEIncomplete higher</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_EDUCATION_TYPELower secondary</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_EDUCATION_TYPESecondary / secondary special</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_FAMILY_STATUSMarried</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_FAMILY_STATUSSeparated</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_FAMILY_STATUSSingle / not married</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_FAMILY_STATUSWidow</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_HOUSING_TYPEOther</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_HOUSING_TYPERented / Municipal</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NAME_HOUSING_TYPEWith parents</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">REGION_POPULATION_RELATIVE</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">DAYS_BIRTH</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">DAYS_EMPLOYED</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">DAYS_REGISTRATION</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">DAYS_ID_PUBLISH</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">OWN_CAR_AGE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_MOBIL</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_WORK_PHONE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_CONT_MOBILE</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_PHONE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_EMAIL</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">OCCUPATION_TYPEDrivers</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">OCCUPATION_TYPELaborers</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">OCCUPATION_TYPEManagers</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">OCCUPATION_TYPEOther</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">OCCUPATION_TYPESales staff</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">REGION_RATING_CLIENT</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">REGION_RATING_CLIENT_W_CITY</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">WEEKDAY_APPR_PROCESS_STARTMONDAY</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">WEEKDAY_APPR_PROCESS_STARTSATURDAY</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">WEEKDAY_APPR_PROCESS_STARTSUNDAY</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">WEEKDAY_APPR_PROCESS_STARTTHURSDAY</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">WEEKDAY_APPR_PROCESS_STARTTUESDAY</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">WEEKDAY_APPR_PROCESS_STARTWEDNESDAY</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">HOUR_APPR_PROCESS_START</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">REG_REGION_NOT_LIVE_REGION</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">REG_REGION_NOT_WORK_REGION</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">LIVE_REGION_NOT_WORK_REGION</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">REG_CITY_NOT_LIVE_CITY</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">REG_CITY_NOT_WORK_CITY</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">LIVE_CITY_NOT_WORK_CITY</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPEConstruction</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPEGovernment</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPEHousing</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPEIndustry</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPEMedicine</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPEOther</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPESchool</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPESelf-employed</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPETrade</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">ORGANIZATION_TYPETransport</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">EXT_SOURCE_1</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">EXT_SOURCE_2</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">EXT_SOURCE_3</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">APARTMENTS_AVG</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">YEARS_BEGINEXPLUATATION_AVG</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">ELEVATORS_AVG</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">LANDAREA_AVG</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">LIVINGAREA_AVG</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NONLIVINGAPARTMENTS_AVG</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NONLIVINGAREA_AVG</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">APARTMENTS_MODE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">YEARS_BUILD_MODE</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">COMMONAREA_MODE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">ELEVATORS_MODE</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLOORSMAX_MODE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">LANDAREA_MODE</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">LIVINGAREA_MODE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">NONLIVINGAPARTMENTS_MODE</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NONLIVINGAREA_MODE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">YEARS_BEGINEXPLUATATION_MEDI</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">COMMONAREA_MEDI</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">ELEVATORS_MEDI</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">ENTRANCES_MEDI</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLOORSMAX_MEDI</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLOORSMIN_MEDI</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">LIVINGAPARTMENTS_MEDI</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">NONLIVINGAPARTMENTS_MEDI</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FONDKAPREMONT_MODEorg spec account</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FONDKAPREMONT_MODEreg oper account</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FONDKAPREMONT_MODEreg oper spec account</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">HOUSETYPE_MODEspecific housing</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">HOUSETYPE_MODEterraced house</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">TOTALAREA_MODE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">WALLSMATERIAL_MODEOther</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">WALLSMATERIAL_MODEPanel</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">WALLSMATERIAL_MODEStone, brick</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">WALLSMATERIAL_MODEWooden</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">EMERGENCYSTATE_MODEYes</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">DEF_30_CNT_SOCIAL_CIRCLE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">OBS_60_CNT_SOCIAL_CIRCLE</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">DEF_60_CNT_SOCIAL_CIRCLE</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">DAYS_LAST_PHONE_CHANGE</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_2</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_3</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_4</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_5</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_6</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_7</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_8</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_9</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_10</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_11</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_12</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_13</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_14</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_15</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_16</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_17</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_18</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_19</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_20</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">FLAG_DOCUMENT_21</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_REQ_CREDIT_BUREAU_HOUR</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_REQ_CREDIT_BUREAU_DAY</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_REQ_CREDIT_BUREAU_WEEK</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_REQ_CREDIT_BUREAU_MON</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_REQ_CREDIT_BUREAU_QRT</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">AMT_REQ_CREDIT_BUREAU_YEAR</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">COUNT_POS_LOANS</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_CNT_INSTALMENT_mean</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_CNT_INSTALMENT_max</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_CNT_INSTALMENT_FUTURE_mean</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_CNT_INSTALMENT_FUTURE_min</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_SK_DPD_mean</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_SK_DPD_max</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_SK_DPD_sum</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_SK_DPD_DEF_sum</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_SK_DPD_ever_rate</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">pos_SK_DPD_DEF_ever_rate</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">COUNT_BUREAU_RECORDS</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">bureau_AMT_CREDIT_SUM_mean</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">bureau_AMT_CREDIT_SUM_max</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">bureau_AMT_CREDIT_SUM_debt</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">bureau_days_credit_mean</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">bureau_ever_overdue_rate</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">bureau_DEBT_RATIO</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">COUNT_CREDIT_CARDS</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_AMT_BALANCE_mean</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_AMT_BALANCE_max</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_AMT_BALANCE_sum</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_AMT_CREDIT_LIMIT_ACTUAL_mean</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_AMT_PAYMENT_CURRENT_sum</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_AMT_PAYMENT_TOTAL_CURRENT_sum</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_CNT_DRAWINGS_CURRENT_sum</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_CNT_INSTALMENT_MATURE_CUM</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_SK_DPD_mean</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_SK_DPD_max</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_SK_DPD_sum</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_SK_DPD_DEF_mean</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_SK_DPD_DEF_sum</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">cc_SK_DPD_DEF_ever_rate</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">COUNT_PREV_APPLICATIONS</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_AMT_APPLICATION_mean</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_AMT_CREDIT_mean</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_AMT_CREDIT_max</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_AMT_ANNUITY_mean</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_AMT_ANNUITY_max</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_DAYS_DECISION_mean</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_DAYS_FIRST_DRAWING_min</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_DAYS_LAST_DUE_max</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_DAYS_TERMINATION_max</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_FLAG_LAST_APPL_PER_CONTRACT_rate</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_NFLAG_LAST_APPL_IN_DAY_rate</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_APPROVED_rate</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">prev_REFUSED_rate</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">COUNT_INSTALLMENT_LOANS</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">inst_AMT_INSTALMENT_mean</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">inst_AMT_INSTALMENT_sum</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">inst_AMT_PAYMENT_mean</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">inst_AMT_PAYMENT_sum</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">inst_delay_mean</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">inst_delay_max</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">inst_ever_late_rate</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">HAS_POS_LOAN</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">HAS_BUREAU_RECORD</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">HAS_CREDIT_CARD</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">HAS_PREV_APP</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">HAS_INSTALLMENT_LOAN</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">EXT_SOURCE_1_missing</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">EXT_SOURCE_2_missing</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">EMERGENCYSTATE_MODE_missing</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">AGE_YEARS</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">ANNUITY_TO_INCOME</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">LOAN_TO_GOODS</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">CREDIT_PER_PERSON</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">AGE_BIN(43.2,53.9]</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="Selected_Feature">AGE_BIN(53.9,69.1]</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="Selected_Feature">AGE_BIN[20.5,34]</td>
+<td class="gt_row gt_left" headers="Feature_Set">Application + Supplementary</td>
+<td class="gt_row gt_right" headers="CV_AUC">0.7693137</td>
 </tr>
 </tbody>
 </table>
@@ -4891,43 +4189,100 @@ height: 0px !important;
 </div>
 </div>
 </div>
+<p>The final LASSO model is trained on the full dataset, then compared against the previous LASSO model trained only on application features to evaluate the impact of adding supplementary features.</p>
+<p>The model trained with both the application and supplementary data achieves a higher cross-validated AUC, and will be used for further tuning and final model development.</p>
 </section>
 </section>
-<section id="cross-validation-auc" class="level2">
-<h2 class="anchored" data-anchor-id="cross-validation-auc">4.4 Cross-Validation AUC</h2>
+<section id="model-optimization-using-full-feature-set" class="level1">
+<h1>5. Model Optimization Using Full Feature Set</h1>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>cv_auc <span class="ot">&lt;-</span> <span class="fu">max</span>(lasso_caret<span class="sc">$</span>results<span class="sc">$</span>ROC)</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>cv_auc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>train_model <span class="ot">&lt;-</span> train_full</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>train_model<span class="sc">$</span>TARGET <span class="ot">&lt;-</span> <span class="fu">factor</span>(train_model<span class="sc">$</span>TARGET,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                             <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>                             <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&quot;No&quot;</span>,<span class="st">&quot;Yes&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="subsample-randomized-tuning" class="level2">
+<h2 class="anchored" data-anchor-id="subsample-randomized-tuning">5.1 Subsample + Randomized Tuning</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>tune_subset <span class="ot">&lt;-</span> train_model <span class="sc">|&gt;</span> </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sample_n</span>(<span class="dv">10000</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>ctrl_tune <span class="ot">&lt;-</span> <span class="fu">trainControl</span>(</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;cv&quot;</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">number =</span> <span class="dv">3</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">sampling =</span> <span class="st">&quot;smote&quot;</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">classProbs =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">summaryFunction =</span> twoClassSummary</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>lasso_tune <span class="ot">&lt;-</span> <span class="fu">train</span>(</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  TARGET <span class="sc">~</span> .,</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> tune_subset,</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;glmnet&quot;</span>,</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>,</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="st">&quot;ROC&quot;</span>,</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">trControl =</span> ctrl_tune,</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">tuneLength =</span> <span class="dv">20</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="final-model-5-fold-cv" class="level2">
+<h2 class="anchored" data-anchor-id="final-model-5-fold-cv">5.2 Final Model (5-Fold CV)</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>ctrl_final <span class="ot">&lt;-</span> <span class="fu">trainControl</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;cv&quot;</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">number =</span> <span class="dv">5</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">sampling =</span> <span class="st">&quot;smote&quot;</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">classProbs =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">summaryFunction =</span> twoClassSummary</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>lasso_final <span class="ot">&lt;-</span> <span class="fu">train</span>(</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  TARGET <span class="sc">~</span> .,</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> train_model,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;glmnet&quot;</span>,</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>,</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="st">&quot;ROC&quot;</span>,</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">trControl =</span> ctrl_final,</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">tuneGrid =</span> lasso_tune<span class="sc">$</span>bestTune</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>cv_auc_final <span class="ot">&lt;-</span> <span class="fu">max</span>(lasso_final<span class="sc">$</span>results<span class="sc">$</span>ROC)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>cv_auc_final</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.7688038</code></pre>
+<pre><code>[1] 0.7551177</code></pre>
 </div>
 </div>
-<p>The maximum cross-validated ROC AUC across hyperparameter combinations is 0.7688, indicating the expected discrimination performance of the tuned LASSO model on unseen data.</p>
+<p>The predicted cross-validated AUC of the final LASSO model is 0.7551, indicating its expected discrimination performance on new, unseen data.</p>
 </section>
-<section id="predict-on-test-set-using-best-hyperparameters" class="level2">
-<h2 class="anchored" data-anchor-id="predict-on-test-set-using-best-hyperparameters">4.5 Predict on Test Set (Using Best Hyperparameters)</h2>
+</section>
+<section id="predict-on-test-set" class="level1">
+<h1>6. Predict on Test Set</h1>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare test data (exclude ID column)</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>test_model <span class="ot">&lt;-</span> test <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>SK_ID_CURR)</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Predicted probabilities for TARGET = &quot;Yes&quot;</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>pred_test_probs <span class="ot">&lt;-</span> <span class="fu">predict</span>(lasso_caret, <span class="at">newdata =</span> test_model, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>)[, <span class="st">&quot;Yes&quot;</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>test_model <span class="ot">&lt;-</span> test <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>SK_ID_CURR)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># generate predictions</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>pred_test_probs <span class="ot">&lt;-</span> <span class="fu">predict</span>(</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  lasso_final,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">newdata =</span> test_model,</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>)[, <span class="st">&quot;Yes&quot;</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Predictions on the test set are generated using the final tuned model obtained from cross validation. The test data are not used during model training or hyperparameter selection and serve only as new unseen observations for which predicted probabilities are required.</p>
-</section>
 </section>
 <section id="create-submission-file" class="level1">
-<h1>5. Create Submission File</h1>
+<h1>7. Create Submission File</h1>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>submission_full <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">SK_ID_CURR =</span> test<span class="sc">$</span>SK_ID_CURR,</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">TARGET =</span> pred_test_probs</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Write submission CSV</span></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(submission_full, <span class="st">&quot;submission_lasso_full.csv&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>submission_full <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">SK_ID_CURR =</span> test<span class="sc">$</span>SK_ID_CURR,</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">TARGET =</span> pred_test_probs</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(submission_full, <span class="st">&quot;submission_lasso_full.csv&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>The resulting submission file received a Kaggle area under the ROC curve of 0.76187 private and 0.77041 public. The private leaderboard is calculated with approximately 80% of the test data.</p>
+<p>The resulting submission file received a Kaggle area under the ROC curve of 0.73926 private and 0.74959 public. The private leaderboard is calculated with approximately 80% of the test data.</p>
 </section>
 
 </main>
