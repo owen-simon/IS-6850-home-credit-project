@@ -15,6 +15,8 @@ execute:
   message: false
 ---
 
+# 1. Setup
+
 ```{r}
 # Load libraries
 library(tidyverse)
@@ -24,6 +26,7 @@ library(randomForest)
 library(gt)
 library(doParallel)
 library(caret)
+library(tibble)
 
 options(na.action = na.pass)
 
@@ -37,7 +40,9 @@ test <- read_csv(file.path(data_dir, "test_final.csv")) |>
   mutate(across(where(is.character), as.factor))
 ```
 
-# Majority Class Model
+# 2. Majority Class Model
+
+## 2.1 Overview
 
 ```{r}
 TARGET_dist <- train |> 
@@ -46,6 +51,10 @@ TARGET_dist <- train |>
 
 gt(TARGET_dist)
 ```
+
+The target variable is highly imbalanced, with the majority class (TARGET = 0) representing approximately 91.9% of the training data. This imbalance will be an important consideration when evaluating model performance.
+
+## 2.2 Baseline Model Performance
 
 ```{r}
 # Baseline predictions (majority class)
@@ -65,11 +74,11 @@ baseline_results <- tibble(
 gt(baseline_results)
 ```
 
-The majority class (TARGET = 0) represents approximately 91.9% of the training data, indicating a significant class imbalance. A baseline model that always predicts the majority class would achieve an accuracy of around 91.9%. However, this model would have an AUC of 0.5, as it does not differentiate between the classes.
+A baseline model that always predicts the majority class would achieve an accuracy of around 91.9%. However, this model would have an AUC of 0.5, as it does not differentiate between the classes.
 
-# Compare Candidate Models
+# 3. Compare Candidate Models
 
-## Data Preparation
+## 3.1 Data Preparation
 ```{r}
 raw_app_train <- read_csv(file.path(data_dir, "application_train.csv")) |>
   mutate(across(where(is.character), as.factor))
@@ -83,9 +92,9 @@ train_app <- train |>
   mutate(TARGET = factor(TARGET, levels = c(0,1)))
 ```
 
-The model comparison will focus on the original application data. Supplementary data sources (bureau, previous applications, etc.) will be explored in future iterations. The LASSO model will be trained using only numeric predictors.
+The initial model comparison will focus on the original application data. Supplementary data sources (bureau, previous applications, etc.) will be explored in future iterations.
 
-## Cross-Validation Control
+## 3.2 Cross-Validation Control
 
 ```{r}
 set.seed(42)
@@ -101,7 +110,9 @@ preds_rf <- numeric(nrow(train_app))
 n_pred_lr <- n_pred_lasso <- n_pred_rf <- NA
 ```
 
-## Enable Parallel Processing
+Five fold cross validation is used to estimate out of sample model performance. For each fold, models are trained on four fifths of the training data and evaluated on the remaining one fifth. This process ensures that performance metrics reflect generalization ability rather than training set fit.
+
+## 3.3 Parallel Processing
 
 ```{r}
 n_cores <- 2
@@ -109,8 +120,7 @@ cl <- makePSOCKcluster(n_cores)
 registerDoParallel(cl)
 ```
 
-## Modeling
-
+## 3.4 Modeling Folds
 
 ```{r}
 for (k in 1:n_folds) {
@@ -146,16 +156,16 @@ for (k in 1:n_folds) {
 }
 ```
 
-## Stop Parallel Cluster
+## 3.5 Stop Parallel Cluster
 
- ```{r}
+```{r}
 stopCluster(cl)
 registerDoSEQ()
 ```
 
-## Model Comparison
+## 3.6 Model Comparison
 
-### Compute Cross-Validated AUC
+### 3.6.1 Compute CV-AUC
 
 ```{r}
 auc_lr <- auc(roc(train_app$TARGET, preds_lr))
@@ -163,7 +173,9 @@ auc_lasso <- auc(roc(train_app$TARGET, preds_lasso))
 auc_rf <- auc(roc(train_app$TARGET, preds_rf))
 ```
 
-### Candidate Model Summary Table
+The reported AUC values are cross validated estimates computed from out of fold predictions. Because each observation is evaluated using a model that was not trained on it, these values provide an unbiased estimate of expected performance on unseen data.
+
+### 3.6.2 Candidate Model Summary Table
 
 ```{r}
 comparison_table <- tibble(
@@ -175,11 +187,11 @@ comparison_table <- tibble(
 gt(comparison_table)
 ```
 
-We will use the LASSO model, because it achieved the highest cross-validated AUC of the three models, followed closely by the Logistic Regression, then the Random Forest. The LASSO model also used significantly fewer predictors than the full Logistic Regression model.
+The LASSO model will be used for further development as it achieves the highest cross-validated AUC among candidate models while retaining fewer predictors than standard Logistic Regression.
 
-# Model Optimization
+# 4. Model Optimization
 
-## Add Supplementary Features to LASSO Model
+## 4.1 Add Supplementary Features
 
 ```{r}
 # full training data (application + supplementary features)
@@ -189,15 +201,22 @@ train_model <- train |> select(-SK_ID_CURR)
 train_model$TARGET <- factor(train_model$TARGET, levels = c(0,1), labels = c("No","Yes"))
 ```
 
-## Fit LASSO Model with SMOTE
+## 4.2 Fit LASSO with SMOTE
 
 ```{r}
+# Define a grid for lambda (regularization) and alpha (mix between lasso/ridge)
+grid <- expand.grid(
+  alpha = seq(0, 1, by = 0.2),
+  lambda = 10^seq(-4, 0, length = 20)
+)
+
 ctrl <- trainControl(
   method = "cv",
   number = 5,
-  sampling = "smote",            # address class imbalance
-  classProbs = TRUE,         
-  summaryFunction = twoClassSummary
+  sampling = "smote",            # handle class imbalance
+  classProbs = TRUE,
+  summaryFunction = twoClassSummary,
+  verboseIter = TRUE
 )
 
 set.seed(42)
@@ -207,23 +226,77 @@ lasso_caret <- train(
   method = "glmnet",
   family = "binomial",
   metric = "ROC",
-  trControl = ctrl
+  trControl = ctrl,
+  tuneGrid = grid
 )
 ```
 
-## Predict on Test Set 
+Hyperparameter tuning explores combinations of alpha and lambda using five fold cross validation on the training data. The value of alpha controls the balance between ridge and LASSO penalties, while lambda controls the overall strength of regularization. The optimal combination is selected based on cross validated ROC AUC. After tuning is complete, the final model is automatically refit on the full training dataset using the selected hyperparameters.
+
+SMOTE is applied within each cross validation fold to address class imbalance. Synthetic minority class observations are generated only within the training portion of each fold, preventing information leakage into validation data and improving the model’s ability to distinguish between classes.
+
+## 4.3 Final Model Features
+
+The final tuned LASSO model is refit on the full training dataset using the optimal hyperparameters selected during cross validation. The resulting coefficient estimates determine which predictors are retained in the final model.
+
+### 4.3.1 Number of Predictors and Selected Features
 ```{r}
-## Predict on Test Set
-test_model <- test |> select(-SK_ID_CURR)
-pred_test_full <- predict(lasso_caret, newdata = test_model, type = "prob")[, "Yes"]
+# Extract coefficients at best lambda
+coef_lasso <- coef(lasso_caret$finalModel, s = lasso_caret$bestTune$lambda)
+
+# Number of predictors (non-zero coefficients)
+num_predictors <- sum(coef_lasso != 0) - 1  # subtract intercept
+num_predictors
+
+# Selected predictor names
+selected_vars <- rownames(coef_lasso)[coef_lasso[,1] != 0]
+selected_vars <- selected_vars[selected_vars != "(Intercept)"]
+
+# Display selected features in a table
+selected_vars_table <- tibble(
+  Selected_Feature = selected_vars
+)
 ```
 
-# Create Submission File
+### 4.3.2 Selected Features Table
+
+```{r}
+gt(selected_vars_table) |>
+  tab_header(
+    title = "Features Selected by Final LASSO Model"
+  )
+```
+
+## 4.4 Cross-Validation AUC
+
+```{r}
+cv_auc <- max(lasso_caret$results$ROC)
+cv_auc
+```
+
+The maximum cross-validated ROC AUC across hyperparameter combinations is 0.7688, indicating the expected discrimination performance of the tuned LASSO model on unseen data.
+
+## 4.5 Predict on Test Set (Using Best Hyperparameters)
+
+```{r}
+# Prepare test data (exclude ID column)
+test_model <- test |> select(-SK_ID_CURR)
+
+# Predicted probabilities for TARGET = "Yes"
+pred_test_probs <- predict(lasso_caret, newdata = test_model, type = "prob")[, "Yes"]
+```
+
+Predictions on the test set are generated using the final tuned model obtained from cross validation. The test data are not used during model training or hyperparameter selection and serve only as new unseen observations for which predicted probabilities are required.
+
+# 5. Create Submission File
 ```{r}
 submission_full <- tibble(
   SK_ID_CURR = test$SK_ID_CURR,
-  TARGET = pred_test_full
+  TARGET = pred_test_probs
 )
 
+# Write submission CSV
 write_csv(submission_full, "submission_lasso_full.csv")
 ```
+
+The resulting submission file received a Kaggle area under the ROC curve of 0.76187 private and 0.77041 public. The private leaderboard is calculated with approximately 80% of the test data.
