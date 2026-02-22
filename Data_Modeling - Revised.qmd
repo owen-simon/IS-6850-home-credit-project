@@ -1,0 +1,312 @@
+---
+title: "Data Modeling"
+author: "Owen Simon"
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    toc-title: "Contents"
+    embed-resources: true
+execute:
+  include: true
+  eval: true    
+  warning: false
+  message: false
+---
+
+# 1. Setup
+
+```{r}
+# Load libraries
+library(tidyverse)
+library(pROC)
+library(glmnet)
+library(randomForest)
+library(gt)
+library(doParallel)
+library(caret)
+library(tibble)
+
+options(na.action = na.pass)
+
+data_dir <- "data-files"
+
+# Read datasets
+train <- read_csv(file.path(data_dir, "train_final.csv")) |>
+  mutate(across(where(is.character), as.factor))
+
+test <- read_csv(file.path(data_dir, "test_final.csv")) |>
+  mutate(across(where(is.character), as.factor))
+```
+
+# 2. Majority Class Model
+
+## 2.1 Overview
+
+```{r}
+TARGET_dist <- train |> 
+  count(TARGET) |>
+  mutate(proportion = n / sum(n))
+
+gt(TARGET_dist)
+```
+
+The target variable is highly imbalanced, with the majority class (TARGET = 0) representing approximately 91.9% of the training data. This imbalance will be an important consideration when evaluating model performance.
+
+## 2.2 Baseline Model Performance
+
+```{r}
+# Baseline predictions (majority class)
+baseline_predictions <- rep.int(0, nrow(train))
+baseline_accuracy <- mean(baseline_predictions == train$TARGET)
+
+# Baseline probabilities (probability of TARGET = 1)
+majority_class_prob <- TARGET_dist$proportion[TARGET_dist$TARGET == 0]
+baseline_probs <- rep(majority_class_prob, nrow(train))
+
+baseline_auc <- roc(train$TARGET, baseline_probs)$auc
+baseline_results <- tibble(
+  Metric = c("Baseline Accuracy", "Baseline AUC"),
+  Value = c(baseline_accuracy, as.numeric(baseline_auc))
+)
+
+gt(baseline_results)
+```
+
+A baseline model that always predicts the majority class would achieve an accuracy of around 91.9%. However, this model would have an AUC of 0.5, as it does not differentiate between the classes.
+
+# 3. Compare Candidate Models
+
+## 3.1 Data Preparation
+```{r}
+raw_app_train <- read_csv(file.path(data_dir, "application_train.csv")) |>
+  mutate(across(where(is.character), as.factor))
+
+# Keep only application-based predictors
+application_cols <- colnames(raw_app_train)
+application_cols_in_train <- intersect(application_cols, colnames(train))
+
+train_app <- train |>
+  select(all_of(application_cols_in_train), TARGET, -SK_ID_CURR) |>
+  mutate(TARGET = factor(TARGET, levels = c(0,1)))
+```
+
+The initial model comparison will focus on the original application data. Supplementary data sources (bureau, previous applications, etc.) will be explored in future iterations.
+
+## 3.2 Cross-Validation Control
+
+```{r}
+set.seed(42)
+n_folds <- 3
+fold_ids <- sample(rep(1:n_folds, length.out = nrow(train_app)))
+
+# Storage for fold predictions
+preds_lr <- numeric(nrow(train_app))
+preds_lasso <- numeric(nrow(train_app))
+preds_rf <- numeric(nrow(train_app))
+
+# Storage for number of predictors
+n_pred_lr <- n_pred_lasso <- n_pred_rf <- NA
+```
+
+Three fold cross validation is used to estimate out of sample model performance. For each fold, models are trained on two thirds of the training data and evaluated on the remaining one third. This approach provides a reliable estimate of how the models are likely to perform on unseen data while balancing computation time and evaluation robustness.
+
+## 3.3 Parallel Processing
+
+```{r}
+n_cores <- 2
+cl <- makePSOCKcluster(n_cores)
+registerDoParallel(cl)
+```
+
+## 3.4 Modeling Folds
+
+```{r}
+for (k in 1:n_folds) {
+  cat("Processing fold", k, "\n")
+  
+  train_fold <- train_app[fold_ids != k, ]
+  test_fold  <- train_app[fold_ids == k, ]
+  
+  # Logistic Regression
+  fit_lr <- glm(TARGET ~ ., data = train_fold, family = binomial)
+  preds_lr[fold_ids == k] <- predict(fit_lr, test_fold, type = "response")
+  if (is.na(n_pred_lr)) n_pred_lr <- length(coef(fit_lr)) - 1
+  
+  # LASSO Logistic Regression
+  x_train <- model.matrix(TARGET ~ . - 1, data = train_fold)
+  y_train <- as.numeric(train_fold$TARGET) - 1
+  x_test <- model.matrix(TARGET ~ . - 1, data = test_fold)
+  
+  lasso <- cv.glmnet(x_train, y_train, family = "binomial", alpha = 1, parallel = TRUE)
+  pred_lasso_fold <- predict(lasso, x_test, s = "lambda.min", type = "response")
+  preds_lasso[fold_ids == k] <- pred_lasso_fold
+  if (is.na(n_pred_lasso)) {
+    coefs <- coef(lasso, s = "lambda.min")
+    n_pred_lasso <- sum(coefs[-1, ] != 0)
+  }
+  
+  # Random Forest
+  set.seed(42 + k)
+  rf <- randomForest(TARGET ~ ., data = train_fold, ntree = 200)
+  pred_rf_fold <- predict(rf, test_fold, type = "prob")[, "1"]
+  preds_rf[fold_ids == k] <- pred_rf_fold
+  if (is.na(n_pred_rf)) n_pred_rf <- ncol(train_fold) - 1
+}
+```
+
+## 3.5 Stop Parallel Cluster
+
+```{r}
+stopCluster(cl)
+registerDoSEQ()
+```
+
+## 3.6 Model Comparison
+
+### 3.6.1 Compute CV-AUC
+
+```{r}
+auc_lr <- auc(roc(train_app$TARGET, preds_lr))
+auc_lasso <- auc(roc(train_app$TARGET, preds_lasso))
+auc_rf <- auc(roc(train_app$TARGET, preds_rf))
+```
+
+The reported AUC values are cross validated estimates computed from out of fold predictions. Because each observation is evaluated using a model that was not trained on it, these values provide an unbiased estimate of expected performance on unseen data.
+
+### 3.6.2 Candidate Model Summary Table
+
+```{r}
+comparison_table <- tibble(
+  Model = c("Logistic", "LASSO", "Random Forest"),
+  CV_AUC = c(auc_lr, auc_lasso, auc_rf),
+  Num_Predictors = c(n_pred_lr, n_pred_lasso, n_pred_rf)
+)
+
+gt(comparison_table)
+```
+
+The LASSO model will be used for further development as it achieves the highest cross-validated AUC among candidate models while retaining fewer predictors than standard Logistic Regression.
+
+# 4. Model Optimization
+
+## 4.1 Add Supplementary Features
+
+```{r}
+# full training data (application + supplementary features)
+train_model <- train |> select(-SK_ID_CURR)
+
+# recode TARGET levels
+train_model$TARGET <- factor(train_model$TARGET, levels = c(0,1), labels = c("No","Yes"))
+```
+
+## 4.2 Subsample + Hyperparameter Tuning
+
+```{r}
+# 1. Take a random subsample for tuning (~5K rows)
+set.seed(42)
+tune_subset <- train_model %>% sample_n(min(5000, nrow(train_model)))
+
+# 2. Define 3-fold CV for tuning
+ctrl_tune <- trainControl(
+  method = "cv",
+  number = 3,                # 3-fold CV for tuning
+  sampling = "smote",        # handle class imbalance
+  classProbs = TRUE,
+  summaryFunction = twoClassSummary,
+  verboseIter = TRUE
+)
+
+# 3. Fit LASSO with randomized search (~20 iterations)
+set.seed(42)
+lasso_tune <- train(
+  TARGET ~ .,
+  data = tune_subset,
+  method = "glmnet",
+  family = "binomial",
+  metric = "ROC",
+  trControl = ctrl_tune,
+  tuneLength = 20
+)
+```
+
+This tuning step finds a good combination of alpha (ridge/lasso balance) and lambda (regularization) efficiently using a subset of the data and 3-fold CV. SMOTE is applied to address class imbalance.
+
+## 4.3 Train Final LASSO Model on Full Data
+
+```{r}
+ctrl_final <- trainControl(
+  method = "cv",
+  number = 5,                # 5-fold CV for final model
+  sampling = "smote",
+  classProbs = TRUE,
+  summaryFunction = twoClassSummary
+)
+
+set.seed(42)
+lasso_final <- train(
+  TARGET ~ .,
+  data = train_model,
+  method = "glmnet",
+  family = "binomial",
+  metric = "ROC",
+  trControl = ctrl_final,
+  tuneGrid = lasso_tune$bestTune
+)
+```
+
+### 4.4 Final Model Features
+```{r}
+# Extract coefficients at best lambda
+coef_lasso <- coef(lasso_final$finalModel, s = lasso_final$bestTune$lambda)
+
+# Number of predictors (non-zero coefficients)
+num_predictors <- sum(coef_lasso != 0) - 1  # subtract intercept
+num_predictors
+
+# Selected predictor names
+selected_vars <- rownames(coef_lasso)[coef_lasso[,1] != 0]
+selected_vars <- selected_vars[selected_vars != "(Intercept)"]
+
+# Display selected features in a table
+selected_vars_table <- tibble(
+  Selected_Feature = selected_vars
+)
+
+gt(selected_vars_table) |>
+  tab_header(
+    title = "Features Selected by Final LASSO Model"
+  )
+```
+
+### 4.5 Cross-Validation AUC
+
+```{r}
+cv_auc <- max(lasso_final$results$ROC)
+cv_auc
+```
+
+## 4.4 Predict on Test Set
+
+```{r}
+# Prepare test data (exclude ID column)
+test_model <- test |> select(-SK_ID_CURR)
+
+# Predicted probabilities for TARGET = "Yes"
+pred_test_probs <- predict(lasso_final, newdata = test_model, type = "prob")[, "Yes"]
+```
+
+Predictions on the test set are generated using the final tuned model obtained from cross validation. The test data are not used during model training or hyperparameter selection and serve only as new unseen observations for which predicted probabilities are required.
+
+# 5. Create Submission File
+```{r}
+submission_full <- tibble(
+  SK_ID_CURR = test$SK_ID_CURR,
+  TARGET = pred_test_probs
+)
+
+write_csv(submission_full, "submission_lasso_full.csv")
+```
+
+The resulting submission file received a Kaggle area under the ROC curve of _ private and _ public. The private leaderboard is calculated with approximately 80% of the test data.

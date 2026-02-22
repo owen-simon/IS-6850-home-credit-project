@@ -29,6 +29,25 @@ The goal of this project is to clean, transform, and enrich application data to 
   - Modular R functions allow repeated application to both train and test datasets  
   - Functions include cleaning, aggregating, imputing, and engineering features  
 
+## Modeling Summary
+
+The modeling notebook demonstrates the predictive modeling workflow applied to the processed dataset:
+
+- Models Explored
+  - Logistic Regression
+  - LASSO
+  - Random Forest
+- Performance Evaluation
+  - Models were evaluated using cross-validated ROC AUC
+  - LASSO achieved the highest CV AUC scores while maintaining generalizability on the test set
+  - Random forest showed solid performance but was more sensitive to hyperparameters
+- Final Model Selection
+  - The LASSO model was selected as the final model for submission due to its balance of interpretability, consistent performance, and ability to handle multicollinearity among features
+  - Test set predictions and CV metrics are available in the notebook
+- Reusable Modeling Workflow
+  - Code is structured to allow re-fitting and evaluation on new datasets
+  - CV and test metrics are clearly labeled for easy comparison
+
 ## Repository Structure
 
 The repository contains the following files and folders:
@@ -38,4 +57,5 @@ The repository contains the following files and folders:
   - `test_final.csv`      The processed test dataset.
 - `EDA.qmd`               Exploratory data analysis of the raw CSV datasets.
 - `Feature_Engineering.R` R script for data cleaning and feature engineering.
+- `Data_Modeling.qmd`     Notebook documenting model trails, evaluation metrics, and final model selection.
 - `README.md`             This project documentation.
