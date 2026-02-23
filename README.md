@@ -40,7 +40,7 @@ The modeling notebook demonstrates the predictive modeling workflow applied to t
 - Performance Evaluation
   - Models were evaluated using cross-validated ROC AUC
   - LASSO achieved the highest CV AUC scores while maintaining generalizability on the test set
-  - Random forest showed solid performance but was more sensitive to hyperparameters
+  - Logistic regression achieved similar performance but used significantly more predictors
 - Final Model Selection
   - The caret package LASSO model was selected as the final model for submission due to its balance of interpretability, consistent performance, and ability to quickly tune hyperparameters
   - Test set predictions and CV metrics are available in the notebook
