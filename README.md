@@ -42,7 +42,7 @@ The modeling notebook demonstrates the predictive modeling workflow applied to t
   - LASSO achieved the highest CV AUC scores while maintaining generalizability on the test set
   - Random forest showed solid performance but was more sensitive to hyperparameters
 - Final Model Selection
-  - The LASSO model was selected as the final model for submission due to its balance of interpretability, consistent performance, and ability to handle multicollinearity among features
+  - The caret package LASSO model was selected as the final model for submission due to its balance of interpretability, consistent performance, and ability to quickly tune hyperparameters. multicollinearity among features
   - Test set predictions and CV metrics are available in the notebook
 - Reusable Modeling Workflow
   - Code is structured to allow re-fitting and evaluation on new datasets
