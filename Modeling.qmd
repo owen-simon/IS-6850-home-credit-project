@@ -171,19 +171,11 @@ registerDoSEQ()
 
 ## 3.6 Model Comparison
 
-### 3.6.1 Compute CV-AUC
-
 ```{r}
 auc_lr <- auc(roc(train_app$TARGET, preds_lr, levels = c(0,1)))
 auc_lasso_app <- auc(roc(train_app$TARGET, preds_lasso, levels = c(0,1)))
 auc_rf <- auc(roc(train_app$TARGET, preds_rf, levels = c(0,1)))
-```
 
-The reported AUC values are cross validated estimates computed from out of fold predictions. Because each observation is evaluated using a model that was not trained on it, these values provide an unbiased estimate of expected performance on unseen data.
-
-### 3.6.2 Candidate Model Summary Table
-
-```{r}
 comparison_table <- tibble(
   Model = c("Logistic", "LASSO", "Random Forest"),
   CV_AUC = c(auc_lr, auc_lasso_app, auc_rf),
@@ -250,6 +242,8 @@ The model trained with both the application and supplementary data achieves a hi
 
 # 5. Model Optimization Using Full Feature Set
 
+During initial model comparison, LASSO was fit using `cv.glmnet()` to evaluate cross-validated performance on different feature sets. For hyperparameter tuning and final model training, `caret::train()` with the glmnet method is used. This approach allows integration of resampling strategies (such as SMOTE), automated hyperparameter search, and structured evaluation of cross-validated AUC, making the workflow more flexible and reproducible.
+
 ```{r}
 train_model <- train_full
 train_model$TARGET <- factor(train_model$TARGET,
@@ -257,39 +251,90 @@ train_model$TARGET <- factor(train_model$TARGET,
                              labels = c("No","Yes"))
 ```
 
-## 5.1 Subsample + Randomized Tuning
+## 5.1 Control Objects for Hyperparameter Tuning
 ```{r}
 set.seed(42)
-tune_subset <- train_model |> 
-  sample_n(10000)
+tune_subset <- train_model |> sample_n(5000)
 
-ctrl_tune <- trainControl(
+ctrl_tune_no   <- trainControl(
   method = "cv",
   number = 3,
-  sampling = "smote",             # adjust for class imbalance during tuning
   classProbs = TRUE,
   summaryFunction = twoClassSummary
 )
 
-set.seed(42)
-lasso_tune <- train(
-  TARGET ~ .,
-  data = tune_subset,
-  method = "glmnet",
-  family = "binomial",
-  metric = "ROC",
-  trControl = ctrl_tune,
-  tuneLength = 20
+ctrl_tune_smote <- trainControl(
+  method = "cv",
+  number = 3,
+  sampling = "smote",
+  classProbs = TRUE,
+  summaryFunction = twoClassSummary
 )
 ```
 
-## 5.2 Final Model (5-Fold CV)
+### 5.2 Hyperparameter Tuning
+```{r}
+# Tune No Sampling
+set.seed(42)
+lasso_tune_no <- train(
+  TARGET ~ ., data = tune_subset,
+  method = "glmnet", family = "binomial",
+  metric = "ROC", trControl = ctrl_tune_no,
+  tuneLength = 20
+)
+best_no <- lasso_tune_no$bestTune
+
+# Tune SMOTE
+set.seed(42)
+lasso_tune_smote <- train(
+  TARGET ~ ., data = tune_subset,
+  method = "glmnet", family = "binomial",
+  metric = "ROC", trControl = ctrl_tune_smote,
+  tuneLength = 20
+)
+best_smote <- lasso_tune_smote$bestTune
+```
+
+### 5.3 Sampling Comparison
+```{r}
+# Compare CV AUCs from tuning
+cv_auc_no   <- max(lasso_tune_no$results$ROC)
+cv_auc_smote <- max(lasso_tune_smote$results$ROC)
+
+tune_comparison <- tibble(
+  Model = c("LASSO (No Sampling)", "LASSO (SMOTE)"),
+  `CV AUC (3-fold)` = c(cv_auc_no, cv_auc_smote)
+)
+
+# Display comparison as gt table
+tune_comparison |>
+  gt() |>
+  fmt_number(
+    columns = `CV AUC (3-fold)`,
+    decimals = 4
+  ) |>
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(
+      rows = `CV AUC (3-fold)` == max(`CV AUC (3-fold)`)
+    )
+  ) |>
+  tab_header(
+    title = "CV AUC Comparison: No Sampling vs SMOTE",
+    subtitle = "3-Fold CV on Subsampled Data"
+  )
+```
+
+# 6. Train Final Model
+
+The LASSO model trained without sampling achieves a slighly higher cross-validated AUC compared to the model trained with SMOTE; however the difference is minimal. Given the simplicity of the no sampling approach and its slightly better performance, the final model will be trained without applying SMOTE.
+
+## 6.1 Fit Final LASSO Model With Best Hyperparameters
 
 ```{r}
 ctrl_final <- trainControl(
   method = "cv",
   number = 5,
-  sampling = "smote",            # adjust for class imbalance
   classProbs = TRUE,
   summaryFunction = twoClassSummary
 )
@@ -302,18 +347,21 @@ lasso_final <- train(
   family = "binomial",
   metric = "ROC",
   trControl = ctrl_final,
-  tuneGrid = lasso_tune$bestTune
+  tuneGrid = best_no
 )
 ```
 
+## 6.2 Final Model Performance
+
 ```{r}
+# Extract CV AUC for the final model
 cv_auc_final <- max(lasso_final$results$ROC)
 cv_auc_final
 ```
 
-The predicted cross-validated AUC of the final LASSO model is 0.7551, indicating its expected discrimination performance on new, unseen data.
+The final LASSO model, trained on the full feature set without sampling, achieved a CV AUC of 0.7562. Although the fold-specific `cv.glmnet()` AUC is slightly higher (0.7693), using a single lambda across folds via `caret::train()` ensures consistent, reproducible performance and simplifies deployment, making this small reduction in AUC an acceptable trade-off.
 
-# 6. Predict on Test Set
+# 7. Predict on Test Set
 
 ```{r}
 test_model <- test |> select(-SK_ID_CURR)
@@ -325,14 +373,16 @@ pred_test_probs <- predict(
   type = "prob")[, "Yes"]
 ```
 
-# 7. Create Submission File
+The submission uses `SK_ID_CURR` from the test set, and the `TARGET` probabilities correspond to the positive class labeled "Yes".
+
+# 8. Create Submission File
 ```{r}
 submission_full <- tibble(
   SK_ID_CURR = test$SK_ID_CURR,
   TARGET = pred_test_probs
 )
 
-write_csv(submission_full, "submission_lasso_full.csv")
+write_csv(submission_full, "submission_lasso_final.csv")
 ```
 
-The resulting submission file received a Kaggle area under the ROC curve of 0.73926 private and 0.74959 public. The private leaderboard is calculated with approximately 80% of the test data.
+The resulting submission file received a Kaggle area under the ROC curve of 0.74213 private and 0.75230 public. The private leaderboard is calculated with approximately 80% of the test data.
