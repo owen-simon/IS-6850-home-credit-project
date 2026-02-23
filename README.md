@@ -42,7 +42,7 @@ The modeling notebook demonstrates the predictive modeling workflow applied to t
   - LASSO achieved the highest CV AUC scores while maintaining generalizability on the test set
   - Random forest showed solid performance but was more sensitive to hyperparameters
 - Final Model Selection
-  - The caret package LASSO model was selected as the final model for submission due to its balance of interpretability, consistent performance, and ability to quickly tune hyperparameters. multicollinearity among features
+  - The caret package LASSO model was selected as the final model for submission due to its balance of interpretability, consistent performance, and ability to quickly tune hyperparameters
   - Test set predictions and CV metrics are available in the notebook
 - Reusable Modeling Workflow
   - Code is structured to allow re-fitting and evaluation on new datasets
@@ -57,5 +57,5 @@ The repository contains the following files and folders:
   - `test_final.csv`      The processed test dataset.
 - `EDA.qmd`               Exploratory data analysis of the raw CSV datasets.
 - `Feature_Engineering.R` R script for data cleaning and feature engineering.
-- `Data_Modeling.qmd`     Notebook documenting model trails, evaluation metrics, and final model selection.
+- `Modeling.qmd`     Notebook documenting model trails, evaluation metrics, and final model selection.
 - `README.md`             This project documentation.
