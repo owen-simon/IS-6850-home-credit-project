@@ -1,12 +1,11 @@
 ---
-title: "Model Card: Home Credit Default Risk Model"
+title: "Credit Default Prediction Model Card"
 author: "Owen Simon"
 format:
   html:
     toc: true
-    toc-depth: 2
+    toc-depth: 3
     toc-location: left
-    number-sections: true
     embed-resources: true
 execute:
   echo: false
@@ -15,61 +14,96 @@ execute:
 ---
 
 ```{r}
-lasso_final <- readRDS("lasso_final_model.rds")
-val_model <- readRDS("validation_data.rds")
-val_probs <- readRDS("validation_probs.rds")
-feature_names <- readRDS("feature_names.rds")
-coef_df <- readRDS("lasso_feature_importance.rds")
+# load libraries
+library(tidyverse)
+library(pROC)
+library(caret)
 ```
 
 # Executive Summary
 
-Home Credit aims to responsibly expand lending to applicants without traditional credit histories. This predictive model estimates the probability that each applicant will successfully repay a loan, leveraging alternative data sources, including application information and telecommunications data.
+This model predicts the probability that a loan applicant will default on a consumer loan. The model was trained using the Home Credit dataset and optimized using LASSO logistic regression.
 
-**Business Recommendation:** Approve loans for applicants with repayment probabilities above the chosen threshold; deny or adjust loans for those below it.  
+The model’s purpose is to help lenders evaluate borrower risk and improve credit allocation decisions.
 
-**Expected Financial Impact:** At the selected threshold, estimated profit per successfully repaid loan is \$600, while expected losses from defaults average 45% of the loan amount, with recovery rates around 25%. The model balances expanding access to credit while minimizing risk.  
+Using cross-validated predictions, the model achieves strong discrimination between borrowers who repay and those who default. Based on realistic lending assumptions about loan profitability and losses from default, an optimal probability threshold was selected to maximize expected financial return.
 
-**Key Caveats:** Accuracy depends on alternative data availability and quality. Economic changes, policy shifts, or missing borrower information may impact predictions. Monitor approval disparities across demographic groups.
+At this threshold:
 
----
+Expected approval rate: XX%
 
-# Model Details
+Expected portfolio default rate: XX%
 
-- **Type:** LASSO Logistic Regression (`glmnet`)
-- **Version:** v1.0
-- **Training Data:**
-  - Source: Home Credit application and alternative data
-  - Rows: `r nrow(train_model)`
-  - Features: `r ncol(train_model) - 1` (excluding target)
-  - Key Features: EXT_SOURCE_1, AMT_CREDIT, DAYS_EMPLOYED, NAME_CONTRACT_TYPE, CODE_GENDER, NAME_EDUCATION_TYPE
-- **Hyperparameters:**
-  - L1/L2 regularization determined via `tuneGrid = best_no`
-  - Family: Binomial (logistic regression)
-  - Cross-validation: 5-fold (`trainControl(method = "cv", number = 5, classProbs = TRUE, summaryFunction = twoClassSummary)`)
+Estimated improvement in portfolio profit relative to approving all borrowers: XX%
 
-**Note:** Model trained to maximize ROC AUC with stratified 5-fold CV.
+The model should be used as a decision support tool rather than the sole basis for lending decisions. Human review and regulatory compliance processes remain necessary.
 
----
+Key caveats include potential bias in historical credit data, limited visibility into informal income sources, and potential changes in borrower behavior over time.
 
-# Intended Use
+# 1 - Model Details
 
-- **Users:** Credit risk analysts, lending officers
-- **Decisions Informed:** Loan approval, loan amount, loan term
-- **Not Designed For:** Predicting other financial behaviors or for populations outside the model’s training distribution
-
----
-
-# Performance Metrics
-
-- **Cross-Validated AUC:** 0.7562
-- **Kaggle Test Set AUC:**  
-  - Public: 0.75230
-  - Private: 0.74213
-
-- **Precision / Recall at chosen threshold:** *(Insert values based on threshold)*  
-- **Additional Metrics:** Confusion matrix and F1 score can be derived from selected threshold
+## 1.1 - Model Type
+- Algorithm: LASSO Logistic Regression (`glmnet`)
+- Implementation: `glmnet` via `caret` package
+- Training method: 5-fold cross-validation
+- Objective: Predict probability of loan default (`TARGET` = 1)
 
 ```{r}
-# Example placeholder for ROC curve
-# plot(roc(train_model$TARGET, predict(lasso_final, train_model, type="prob")[,2]))
+lasso_final <- readRDS("lasso_final_model.rds")
+feature_names <- readRDS("feature_names.rds")
+coef_df <- readRDS("lasso_feature_importance.rds")
+```
+
+## 1.2 - Key Hyperparameters
+
+```{r}
+lasso_final$bestTune
+```
+
+## 1.3 - Training Data Summary
+
+The model was trainined on the **Home Credit Default Risk** dataset, which contains 198 unique borrower demographic, financial, and credit history variables.
+
+- Target variable: `TARGET` (1 = default, 0 = no default)
+- Dataset Characteristics:
+  - Highly imbalanced
+  - Loan default rate of 8.1%
+
+The dataset includes engineered features dereived from supplementary credit bureau and previous loan application tables.
+
+# 2 - Intended Use
+
+## 2.1 - Intended Users
+
+## 2.2 - Decisions Supported
+
+## 2.3 - Out of Scope
+
+# 3 - Performance Metrics
+
+```{r}
+val_model <- readRDS("validation_data.rds")
+val_probs <- readRDS("validation_probs.rds")
+
+roc_obj <- roc(val_model$TARGET, val_probs)
+val_auc <- auc(roc_obj)
+
+val_auc
+```
+
+## 3.1 - Cross-Validated Performance
+
+```{r}
+cv_auc <- max(lasso_final$results$ROC)
+cv_auc
+```
+
+## 3.2 - Precision and Recall
+
+```{r}
+threshold <- 0.5
+pred_class <- ifelse(val_probs > threshold,"Yes","No")
+pred_class <- factor(pred_class,levels=c("No","Yes"))
+
+confusionMatrix(pred_class,val_model$TARGET)
+```

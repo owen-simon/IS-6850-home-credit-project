@@ -262,7 +262,7 @@ The model trained with both the application and supplementary data achieves a hi
 
 # 5. Model Optimization Using Full Feature Set
 
-During initial model comparison, LASSO was fit using `cv.glmnet()` to evaluate cross-validated performance on different feature sets. For hyperparameter tuning and final model training, `caret::train()` with the glmnet method is used. This approach allows integration of resampling strategies (such as SMOTE), automated hyperparameter search, and structured evaluation of cross-validated AUC, making the workflow more flexible and reproducible.
+During initial model comparison, LASSO was fit using `cv.glmnet()` to evaluate cross-validated performance on different feature sets. For hyperparameter tuning and final model training, `caret::train()` with the glmnet method is used. This approach allows integration of resampling strategies (such as SMOTE, which synthetically oversamples the minority class), automated hyperparameter search, and structured evaluation of cross-validated AUC, making the workflow more flexible and reproducible.
 
 ```{r}
 train_model <- train_full
@@ -347,14 +347,15 @@ tune_comparison |>
 
 # 6. Train Final Model
 
-The LASSO model trained without sampling achieves a slighly higher cross-validated AUC compared to the model trained with SMOTE; however the difference is minimal. Given the simplicity of the no sampling approach and its slightly better performance, the final model will be trained without applying SMOTE.
+The LASSO model trained with SMOTE achieved a slightly higher cross-validated AUC than the model trained without sampling during 3-fold cross-validation on the subsampled data; therefore, SMOTE was selected for the final model to address class imbalance.
 
 ## 6.1 Fit Final LASSO Model With Best Hyperparameters
 
 ```{r}
-ctrl_final <- trainControl(
+ctrl_final_smote <- trainControl(
   method = "cv",
   number = 5,
+  sampling = "smote",
   classProbs = TRUE,
   summaryFunction = twoClassSummary
 )
@@ -366,8 +367,8 @@ lasso_final <- train(
   method = "glmnet",
   family = "binomial",
   metric = "ROC",
-  trControl = ctrl_final,
-  tuneGrid = best_no
+  trControl = ctrl_final_smote,
+  tuneGrid = best_smote
 )
 ```
 
@@ -433,7 +434,7 @@ submission_full <- tibble(
 write_csv(submission_full, "submission_lasso_final.csv")
 ```
 
-The resulting submission file received a Kaggle area under the ROC curve of 0.74213 private and 0.75230 public. The private leaderboard is calculated with approximately 80% of the test data.
+The resulting submission file received a Kaggle area under the ROC curve of 0.74216 private and 0.75233 public. The private leaderboard is calculated with approximately 80% of the test data.
 
 # 9. Data Export for Future Use
 
