@@ -199,7 +199,27 @@ train_full <- train |>
 
 Now, the model will be trained on the full feature set, including both the original application variables and the newly added aggregated features, to leverage all available information for optimal predictive performance.
 
-## 4.2 3-Fold CV With Supplementary Features
+## 4.2 Train/Validation Split for Model Card Validation
+
+```{r}
+set.seed(42)
+
+train_index <- createDataPartition(train_full$TARGET, p = 0.8, list = FALSE)
+
+train_model <- train_full[train_index, ]
+val_model   <- train_full[-train_index, ]
+
+# Convert target labels for caret
+train_model$TARGET <- factor(train_model$TARGET,
+                             levels = c(0,1),
+                             labels = c("No","Yes"))
+
+val_model$TARGET <- factor(val_model$TARGET,
+                           levels = c(0,1),
+                           labels = c("No","Yes"))
+```
+
+## 4.3 3-Fold CV With Supplementary Features
 
 ```{r}
 set.seed(42)
@@ -225,7 +245,7 @@ auc_lasso_full <- auc(roc(train_full$TARGET, preds_lasso_full, levels = c(0,1)))
 auc_lasso_full
 ```
 
-## 4.3 Feature Set Comparison
+## 4.4 Feature Set Comparison
 
 ```{r}
 feature_comparison <- tibble(
@@ -361,8 +381,27 @@ cv_auc_final
 
 The final LASSO model, trained on the full feature set without sampling, achieved a CV AUC of 0.7562. Although the fold-specific `cv.glmnet()` AUC is slightly higher (0.7693), using a single lambda across folds via `caret::train()` ensures consistent, reproducible performance and simplifies deployment, making this small reduction in AUC an acceptable trade-off.
 
-# 7. Predict on Test Set
+## 6.3 Feature Importance
 
+```{r}
+# Extract coefficients for the selected lambda
+coef_lasso <- coef(lasso_final$finalModel, s = lasso_final$bestTune$lambda)
+
+# Convert to a tidy data frame
+coef_df <- tibble(
+  Feature = rownames(coef_lasso),
+  Coefficient = as.numeric(coef_lasso)
+) |>
+  filter(Feature != "(Intercept)") |>
+  arrange(desc(abs(Coefficient)))
+
+# View top 20 variables by absolute impact
+head(coef_df, 20)
+```
+
+# 7. Predictions
+
+## 7.1 Generate Predictions on Test Set
 ```{r}
 test_model <- test |> select(-SK_ID_CURR)
 
@@ -370,6 +409,15 @@ test_model <- test |> select(-SK_ID_CURR)
 pred_test_probs <- predict(
   lasso_final,
   newdata = test_model,
+  type = "prob")[, "Yes"]
+```
+
+## 7.2 Generate Predictions on Validation Set for Model Card Use
+```{r}
+# Also generate predicted probabilities on the validation set for model card
+val_probs <- predict(
+  lasso_final, 
+  newdata = val_model, 
   type = "prob")[, "Yes"]
 ```
 
@@ -386,3 +434,43 @@ write_csv(submission_full, "submission_lasso_final.csv")
 ```
 
 The resulting submission file received a Kaggle area under the ROC curve of 0.74213 private and 0.75230 public. The private leaderboard is calculated with approximately 80% of the test data.
+
+# 9. Data Export for Future Use
+
+```{r}
+# Final trained model
+saveRDS(lasso_final, "lasso_final_model.rds")
+
+# Validation data and probabilities for model card
+saveRDS(val_model, "validation_data.rds")
+saveRDS(val_probs, "validation_probs.rds")
+
+# Train/validation split indices (reproducibility)
+saveRDS(train_index, "train_index.rds")
+
+# Feature names (to ensure new data can be processed correctly)
+feature_names <- colnames(train_full)
+saveRDS(feature_names, "feature_names.rds")
+
+# Cross-validated predictions and AUCs
+saveRDS(preds_lasso_full, "cv_preds_lasso_full.rds")
+saveRDS(auc_lasso_full, "cv_auc_lasso_full.rds")
+
+# Optional: baseline predictions and probabilities
+saveRDS(baseline_predictions, "baseline_predictions.rds")
+saveRDS(baseline_probs, "baseline_probs.rds")
+
+# Extract coefficients for the selected lambda
+coef_lasso <- coef(lasso_final$finalModel, s = lasso_final$bestTune$lambda)
+
+# Convert to tidy data frame for reporting top features
+coef_df <- tibble(
+  Feature = rownames(coef_lasso),
+  Coefficient = as.numeric(coef_lasso)
+) |>
+  filter(Feature != "(Intercept)") |>
+  arrange(desc(abs(Coefficient)))
+
+# Save feature importance table
+saveRDS(coef_df, "lasso_feature_importance.rds")
+```

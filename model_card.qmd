@@ -14,106 +14,62 @@ execute:
   message: false
 ---
 
+```{r}
+lasso_final <- readRDS("lasso_final_model.rds")
+val_model <- readRDS("validation_data.rds")
+val_probs <- readRDS("validation_probs.rds")
+feature_names <- readRDS("feature_names.rds")
+coef_df <- readRDS("lasso_feature_importance.rds")
+```
+
 # Executive Summary
 
-## Business Recommendation
+Home Credit aims to responsibly expand lending to applicants without traditional credit histories. This predictive model estimates the probability that each applicant will successfully repay a loan, leveraging alternative data sources, including application information and telecommunications data.
 
-(Write this last.)
+**Business Recommendation:** Approve loans for applicants with repayment probabilities above the chosen threshold; deny or adjust loans for those below it.  
 
-This model estimates the probability that a loan applicant will default.  
-At the selected decision threshold of **X%**, the model is expected to:
+**Expected Financial Impact:** At the selected threshold, estimated profit per successfully repaid loan is \$600, while expected losses from defaults average 45% of the loan amount, with recovery rates around 25%. The model balances expanding access to credit while minimizing risk.  
 
-- Approve approximately X% of applicants  
-- Reduce default losses by $X per 10,000 applications  
-- Increase expected profit by $X compared to approving all applicants  
-
-## Financial Impact
-
-(Insert final business impact table here.)
-
-## Key Caveats
-
-- Model trained on historical data  
-- No macroeconomic stress testing  
-- Fairness gaps exist across demographic groups  
+**Key Caveats:** Accuracy depends on alternative data availability and quality. Economic changes, policy shifts, or missing borrower information may impact predictions. Monitor approval disparities across demographic groups.
 
 ---
 
-# 1. Model Details
+# Model Details
 
-## 1.1 Model Type and Version
+- **Type:** LASSO Logistic Regression (`glmnet`)
+- **Version:** v1.0
+- **Training Data:**
+  - Source: Home Credit application and alternative data
+  - Rows: `r nrow(train_model)`
+  - Features: `r ncol(train_model) - 1` (excluding target)
+  - Key Features: EXT_SOURCE_1, AMT_CREDIT, DAYS_EMPLOYED, NAME_CONTRACT_TYPE, CODE_GENDER, NAME_EDUCATION_TYPE
+- **Hyperparameters:**
+  - L1/L2 regularization determined via `tuneGrid = best_no`
+  - Family: Binomial (logistic regression)
+  - Cross-validation: 5-fold (`trainControl(method = "cv", number = 5, classProbs = TRUE, summaryFunction = twoClassSummary)`)
 
-- Model Type: Logistic Regression with L1 regularization (LASSO)  
-- Implementation: `glmnet` via caret  
-- Version: v1.0  
-- Training Date: (insert date)
-
-## 1.2 Training Data Summary
-
-- Dataset: Home Credit Default Risk  
-- Training observations: (insert count)  
-- Features after preprocessing: (insert count)  
-- Target variable: `TARGET`  
-  - 1 = Default  
-  - 0 = Repaid  
-
-Class imbalance: X% default rate.
-
-## 1.3 Key Hyperparameters
-
-- Regularization type: L1  
-- Optimal lambda: (insert)  
-- Cross validation: 10-fold  
-- Tuning metric: ROC AUC  
+**Note:** Model trained to maximize ROC AUC with stratified 5-fold CV.
 
 ---
 
-# 2. Intended Use
+# Intended Use
 
-## 2.1 Intended Users
-
-- Credit risk analysts  
-- Underwriting teams  
-- Lending strategy managers  
-
-## 2.2 Decision Support
-
-The model informs:
-
-- Loan approval decisions  
-- Risk-based pricing  
-- Portfolio risk management  
-
-## 2.3 Out of Scope
-
-- Not a replacement for regulatory compliance checks  
-- Not designed for small business or mortgage lending  
-- Not validated for macroeconomic downturn scenarios  
+- **Users:** Credit risk analysts, lending officers
+- **Decisions Informed:** Loan approval, loan amount, loan term
+- **Not Designed For:** Predicting other financial behaviors or for populations outside the model’s training distribution
 
 ---
 
-# 3. Performance Metrics
+# Performance Metrics
 
-## 3.1 Cross-Validated Performance
+- **Cross-Validated AUC:** 0.7562
+- **Kaggle Test Set AUC:**  
+  - Public: 0.75230
+  - Private: 0.74213
 
-- CV AUC: `r cv_auc`  
-- Precision at chosen threshold: (insert)  
-- Recall at chosen threshold: (insert)
-
-## 3.2 Kaggle Test Performance
-
-- Kaggle AUC: (insert leaderboard score)
-
-## 3.3 Threshold-Specific Performance
+- **Precision / Recall at chosen threshold:** *(Insert values based on threshold)*  
+- **Additional Metrics:** Confusion matrix and F1 score can be derived from selected threshold
 
 ```{r}
-# Placeholder objects to populate from modeling notebook
-cv_auc <- NA
-precision_at_thresh <- NA
-recall_at_thresh <- NA
-kaggle_auc <- NA
-
-cv_auc
-precision_at_thresh
-recall_at_thresh
-kaggle_auc
+# Example placeholder for ROC curve
+# plot(roc(train_model$TARGET, predict(lasso_final, train_model, type="prob")[,2]))
