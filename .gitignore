@@ -28,3 +28,4 @@ Test_Environment.qmd
 # Build artifacts (if using build tools)
 dist/
 build/
+rds-files/

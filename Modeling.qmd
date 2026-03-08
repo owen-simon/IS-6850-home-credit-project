@@ -434,7 +434,7 @@ submission_full <- tibble(
 write_csv(submission_full, "submission_lasso_final.csv")
 ```
 
-The resulting submission file received a Kaggle area under the ROC curve of 0.74216 private and 0.75233 public. The private leaderboard is calculated with approximately 80% of the test data.
+The resulting submission file received a Kaggle area under the ROC curve of 0.73036 private and 0.74181 public. The private leaderboard is calculated with approximately 80% of the test data.
 
 # 9. Data Export for Future Use
 

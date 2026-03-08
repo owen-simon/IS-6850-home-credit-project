@@ -18,92 +18,194 @@ execute:
 library(tidyverse)
 library(pROC)
 library(caret)
+library(gt)
+library(dplyr)
+```
+
+```{r}
+cv_preds <- readRDS("rds-files/cv_preds_lasso_full.rds")
+val_model <- readRDS("rds-files/validation_data.rds")
+val_probs <- readRDS("rds-files/validation_probs.rds")
 ```
 
 # Executive Summary
 
-This model predicts the probability that a loan applicant will default on a consumer loan. The model was trained using the Home Credit dataset and optimized using LASSO logistic regression.
+This model predicts the probability that a borrower will default on a consumer loan. It was trained using loan application data, combined with supplemental datasets detailing historical credit behavior.
 
-The model’s purpose is to help lenders evaluate borrower risk and improve credit allocation decisions.
+The model supports lenders in evaluating borrower risk and improving credit allocation decisions. Using cross-validated predictions, the model discriminates well between borrowers who are likely to repay and those at high risk of default.
 
-Using cross-validated predictions, the model achieves strong discrimination between borrowers who repay and those who default. Based on realistic lending assumptions about loan profitability and losses from default, an optimal probability threshold was selected to maximize expected financial return.
+Based on realistic assumptions about loan profitability and losses from default, an optimal probability threshold was selected to maximize expected financial return.
 
-At this threshold:
+**At the profit-maximizing threshold:**
+- **Approval Rate:**
+- **Portfolio default rate:**
+- **Estimated portfolio profit:**
 
-Expected approval rate: XX%
+The model is intended as a **decision support tool**, not a replacement for human review or regulatory compliance.
 
-Expected portfolio default rate: XX%
+**Key caveats:** Potential bias in historical data, incomplete visibility into informal income, and changes in borrower behavior over time.
 
-Estimated improvement in portfolio profit relative to approving all borrowers: XX%
+# 1) Model Details
 
-The model should be used as a decision support tool rather than the sole basis for lending decisions. Human review and regulatory compliance processes remain necessary.
-
-Key caveats include potential bias in historical credit data, limited visibility into informal income sources, and potential changes in borrower behavior over time.
-
-# 1 - Model Details
+This section describes the **model type, version, training data, and key hyperparameters**.
 
 ## 1.1 - Model Type
-- Algorithm: LASSO Logistic Regression (`glmnet`)
-- Implementation: `glmnet` via `caret` package
-- Training method: 5-fold cross-validation
-- Objective: Predict probability of loan default (`TARGET` = 1)
+
+- **Algorithm:** LASSO Logistic Regression (`glmnet`)  
+- **Implementation:** `glmnet` via the `caret` package  
+- **Training method:** 5-fold cross-validation with SMOTE sampling  
+- **Objective:** Predict probability of loan default (`TARGET` = 1)  
 
 ```{r}
-lasso_final <- readRDS("lasso_final_model.rds")
-feature_names <- readRDS("feature_names.rds")
-coef_df <- readRDS("lasso_feature_importance.rds")
+# Load final model and feature importance
+lasso_final <- readRDS("rds-files/lasso_final_model.rds")
+feature_names <- readRDS("rds-files/feature_names.rds")
+coef_df <- readRDS("rds-files/lasso_feature_importance.rds")
 ```
 
-## 1.2 - Key Hyperparameters
+### 1.2 - Model Version
+
+| Attribute | Value |
+|----------|------|
+| Model name | Credit Default Prediction Model |
+| Algorithm | LASSO Logistic Regression |
+| Implementation | `glmnet` via `caret` |
+| Training procedure | 5-fold cross-validation |
+| Target variable | `TARGET` (1 = default, 0 = repaid) |
+| Output | Probability of loan default |
+
+### 1.3 - Training Data Summary
+
+The model was trained on **loan application data** with supplemental credit history datasets. Features were aggregated at the borrower level to produce a comprehensive predictor set.
+
+| Dataset | Description |
+|---------|-------------|
+| `application_train` | Loan applications with demographic, financial, and target information |
+| `application_test` | Loan applications without the target variable, used for evaluation |
+| `bureau` | Historical credit bureau records |
+| `bureau_balance` | Monthly loan balance status from bureau reports |
+| `previous_application` | Records of previous loan applications |
+| `credit_card_balance` | Credit card balances and repayment behavior |
+| `POS_CASH_balance` | Point-of-sale and cash loan repayment history |
+| `installments_payments` | Historical installment payment records |
+
+**Target variable:**
+
+- `TARGET = 1` → borrower defaulted  
+- `TARGET = 0` → borrower repaid  
+
+The dataset is **highly imbalanced**, with defaults representing a small proportion of all observations.
+
+### 1.4 - Key Hyperparameters
 
 ```{r}
+# Display the best hyperparameters for the final model
 lasso_final$bestTune
 ```
 
-## 1.3 - Training Data Summary
+These hyperparameters were selected using cross-validation on a subset of the training data and SMOTE sampling.
 
-The model was trainined on the **Home Credit Default Risk** dataset, which contains 198 unique borrower demographic, financial, and credit history variables.
+## 2) - Intended Use
 
-- Target variable: `TARGET` (1 = default, 0 = no default)
-- Dataset Characteristics:
-  - Highly imbalanced
-  - Loan default rate of 8.1%
+### 2.1 - Intended Users
 
-The dataset includes engineered features dereived from supplementary credit bureau and previous loan application tables.
+This model is designed for use by:
 
-# 2 - Intended Use
+- Credit risk analysts evaluating borrower applications  
+- Consumer lending decision systems and automated underwriting pipelines  
+- Risk management teams monitoring portfolio performance  
 
-## 2.1 - Intended Users
+### 2.2 - Decisions Supported
 
-## 2.2 - Decisions Supported
+The model supports decisions such as:
 
-## 2.3 - Out of Scope
+- Approving or denying loan applications based on predicted default risk  
+- Identifying borrowers who may require additional review or manual underwriting  
+- Prioritizing applications for follow-up or risk-based pricing adjustments  
 
-# 3 - Performance Metrics
+### 2.3 - Out of Scope
+
+This model is **not intended to:**
+
+- Predict repayment amounts or timing beyond default/no-default
+- Replace human judgment in underwriting decisions  
+- Predict defaults in a different population or market without retraining  
+- Be used outside consumer lending contexts
+
+# 3) Performance Metrics
+
+This section evaluates model performance using **Area Under the ROC Curve (AUC)**.  
+AUC is a threshold-independent metric that measures how well the model separates borrowers who default from those who repay.
+
+Metrics that depend on a classification cutoff (such as **precision, recall, approval rates, and confusion matrices**) will be evaluated after selecting an optimal decision threshold in Section 4.
+
+## 3.1 Cross-Validated Performance
+
+The final model was trained using **5-fold cross-validation with SMOTE sampling** to address class imbalance.  
+The cross-validated AUC provides an estimate of model performance during training.
 
 ```{r}
-val_model <- readRDS("validation_data.rds")
-val_probs <- readRDS("validation_probs.rds")
-
-roc_obj <- roc(val_model$TARGET, val_probs)
-val_auc <- auc(roc_obj)
-
-val_auc
-```
-
-## 3.1 - Cross-Validated Performance
-
-```{r}
-cv_auc <- max(lasso_final$results$ROC)
+cv_auc <- readRDS("rds-files/cv_auc_lasso_full.rds")
 cv_auc
 ```
 
-## 3.2 - Precision and Recall
+## 3.2 - Validation Set Performance
+
+To obtain an unbiased estimate of performance, predictions were generated on a hold-out validation set that was not used during training.
 
 ```{r}
-threshold <- 0.5
-pred_class <- ifelse(val_probs > threshold,"Yes","No")
-pred_class <- factor(pred_class,levels=c("No","Yes"))
+val_model <- readRDS("rds-files/validation_data.rds")
+val_probs <- readRDS("rds-files/validation_probs.rds")
 
-confusionMatrix(pred_class,val_model$TARGET)
+roc_obj <- roc(val_model$TARGET, val_probs)
+auc_val <- auc(roc_obj)
+
+auc_val
 ```
+
+The validation AUC reflects the model’s ability to distinguish between defaulting and non-defaulting borrowers on unseen data.
+
+## 3.3 - Performance Summary Table
+
+The table below compares the cross-validated AUC from training with the validation AUC from the hold-out dataset.
+
+```{r}
+auc_table <- tibble(
+  Metric = c("Cross-Validated AUC", "Validation AUC"),
+  Value  = c(cv_auc, auc_val)
+)
+
+auc_table |>
+  mutate(Value = round(Value, 4)) |>
+  gt() |>
+  cols_label(
+    Metric = "Metric",
+    Value = "Value"
+  ) |>
+  fmt_number(
+    columns = Value,
+    decimals = 4
+  )
+```
+
+The cross-validated AUC and validation AUC are similar,
+indicating that the model generalizes reasonably well to unseen data and does
+not show strong evidence of overfitting.
+
+## 3.4 - Kaggle Benchmark
+
+For additional context, model performance can be compared to scores from the
+*Home Credit Default Risk* Kaggle competition.
+
+| Benchmark | AUC |
+|---|---|
+| Cross-Validated AUC | 0.7693 |
+| Validation AUC | 0.7520 |
+| Kaggle Public Score | 0.7418 |
+| Kaggle Private Score | 0.7304 |
+
+The Kaggle leaderboard scores are slightly lower than the cross-validated and
+validation AUC values. This is expected because the Kaggle test set represents
+completely unseen data, while the validation set is drawn from the same
+distribution as the training data. Minor differences also arise because the
+private leaderboard is calculated using approximately 80% of the test set.
