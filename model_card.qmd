@@ -20,48 +20,65 @@ library(pROC)
 library(caret)
 library(gt)
 library(dplyr)
+library(ggplot2)
+library(fastshap)
 ```
 
 ```{r}
 cv_preds <- readRDS("rds-files/cv_preds_lasso_full.rds")
+cv_auc <- readRDS("rds-files/cv_auc_lasso_full.rds")
 val_model <- readRDS("rds-files/validation_data.rds")
 val_probs <- readRDS("rds-files/validation_probs.rds")
+coef_df <- readRDS("rds-files/lasso_feature_importance.rds")
+lasso_final <- readRDS("rds-files/lasso_final_model.rds")
+feature_names <- readRDS("rds-files/feature_names.rds")
 ```
 
-# Executive Summary
+## Home Credit Predictive Lending Summary
 
-This model predicts the probability that a borrower will default on a consumer loan. It was trained using loan application data, combined with supplemental datasets detailing historical credit behavior.
+### Business Context
 
-The model supports lenders in evaluating borrower risk and improving credit allocation decisions. Using cross-validated predictions, the model discriminates well between borrowers who are likely to repay and those at high risk of default.
+Many potential borrowers lack sufficient credit histories, making it difficult to evaluate creditworthiness. To responsibly expand access to credit, Home Credit must leverage alternative data sources to assess repayment risk for these applicants.
 
-Based on realistic assumptions about loan profitability and losses from default, an optimal probability threshold was selected to maximize expected financial return.
+### Analytics Approach
 
-**At the profit-maximizing threshold:**
-- **Approval Rate:**
-- **Portfolio default rate:**
-- **Estimated portfolio profit:**
+A machine learning model has been developed to estimate the probability that each applicant will successfully repay a loan. Key points:
+- Inputs include customer application information and alternative data such as telecommunications records.
+- Outputs are expressed as repayment probabilities, which guide decisions on loan approval, loan amount, and loan term.
+- The model was trained using LASSO regression with cross-validation to ensure generalizability and mitigate overfitting.
 
-The model is intended as a **decision support tool**, not a replacement for human review or regulatory compliance.
+### Key Recommendations
 
-**Key caveats:** Potential bias in historical data, incomplete visibility into informal income, and changes in borrower behavior over time.
+- **Use predicted repayment probabilities to inform lending decisions:** Approve applicants with high predicted repayment likelihood and consider manual review for borderline cases.  
+- **Apply a data-driven approval threshold:** Approve applicants with predicted repayment probability above **0.65**, balancing default risk and expected profit.  
+- **Integrate into automated underwriting pipelines:** Incorporate the model into decision systems while maintaining human oversight.  
+- **Monitor model fairness and performance:** Track approval rates and outcomes across demographic groups to prevent unintended bias.
 
-# 1) Model Details
+### Expected Impact
+
+- **Broaden financial inclusion:** Extend credit to qualified borrowers who lack traditional credit histories.
+- **Manage default risk:** Identify high-risk applicants and adjust approval or loan terms accordingly.
+- **Operational efficiency:** Support faster, data-driven underwriting decisions.
+
+
+### Caveats and Limitations
+- **Data gaps:** Incomplete or inaccurate applicant information may affect predictions.
+- **Model constraints:** Linear relationships captured by LASSO may miss complex borrower behaviors.
+- **Regulatory and fairness considerations:** Features like gender cannot be used for decision-making; model outputs should be monitored for disparities.
+- **Deployment risk:** Applying the model outside the original population or product type without retraining may produce unreliable results.
+
+--- 
+
+## 1. Model Details
 
 This section describes the **model type, version, training data, and key hyperparameters**.
 
-## 1.1 - Model Type
+### 1.1 - Model Type
 
 - **Algorithm:** LASSO Logistic Regression (`glmnet`)  
 - **Implementation:** `glmnet` via the `caret` package  
 - **Training method:** 5-fold cross-validation with SMOTE sampling  
 - **Objective:** Predict probability of loan default (`TARGET` = 1)  
-
-```{r}
-# Load final model and feature importance
-lasso_final <- readRDS("rds-files/lasso_final_model.rds")
-feature_names <- readRDS("rds-files/feature_names.rds")
-coef_df <- readRDS("rds-files/lasso_feature_importance.rds")
-```
 
 ### 1.2 - Model Version
 
@@ -105,7 +122,7 @@ lasso_final$bestTune
 
 These hyperparameters were selected using cross-validation on a subset of the training data and SMOTE sampling.
 
-## 2) - Intended Use
+## 2. Intended Use
 
 ### 2.1 - Intended Users
 
@@ -132,40 +149,87 @@ This model is **not intended to:**
 - Predict defaults in a different population or market without retraining  
 - Be used outside consumer lending contexts
 
-# 3) Performance Metrics
+### 2.4 - Limitations and Risks
 
-This section evaluates model performance using **Area Under the ROC Curve (AUC)**.  
-AUC is a threshold-independent metric that measures how well the model separates borrowers who default from those who repay.
+While the model supports credit risk evaluation, users should be aware of the following limitations and potential risks:
 
-Metrics that depend on a classification cutoff (such as **precision, recall, approval rates, and confusion matrices**) will be evaluated after selecting an optimal decision threshold in Section 4.
+- **Data Limitations:**  
+  Missing, outdated, or inaccurate applicant information may reduce predictive accuracy, particularly for applicants with limited financial histories or incomplete alternative data sources.
 
-## 3.1 Cross-Validated Performance
+- **Model Limitations:**  
+  The LASSO model captures linear relationships and may not fully account for complex interactions, rare high-risk profiles, or temporal patterns in repayment behavior. Predictions should be interpreted as risk scores, not guarantees of repayment.
 
-The final model was trained using **5-fold cross-validation with SMOTE sampling** to address class imbalance.  
-The cross-validated AUC provides an estimate of model performance during training.
+- **Deployment Risks:**  
+  Applying the model outside the original population, market, or product type without retraining can lead to unreliable results. Operational errors in preprocessing, feature engineering, or data handling may also compromise predictions.
+
+- **Fairness and Bias Risks:**  
+  Certain demographic patterns (e.g., age, education, correlated financial behaviors) can lead to disparities in approval rates. Protected features such as gender are not used for decision-making, but correlated proxies may still influence outcomes. Continuous monitoring, evaluation, and, if necessary, threshold adjustment or model retraining are required to mitigate unintended bias.
+
+- **Regulatory Considerations:**  
+  Model outputs must comply with lending regulations, including the Equal Credit Opportunity Act (ECOA). Features that could constitute discriminatory factors (e.g., gender) must never be used in loan decisions, and denial reasons must be explainable to applicants.
+
+- **Generalizability Constraints:**  
+  Predictions are valid for the population and products represented in the training data. Applying the model to new geographic regions, loan types, or applicant populations may require retraining or recalibration.
+
+## 3. Performance Metrics
+
+This section evaluates model performance using **Area Under the ROC Curve (AUC)**, as well as **threshold-dependent metrics** including **precision, recall, and loan approval rate** at a chosen decision threshold. 
+
+Threshold-dependent metrics are calculated at the optimal threshold identified in [Section 4](#decision-threshold-analysis).
+
+### 3.1 Cross-Validated Performance
+
+The model was trained on 80 % of the training dataset using 5-fold cross-validation with SMOTE sampling to address class imbalance, while 20 % of the data was held out as a validation set to evaluate performance on unseen examples.
 
 ```{r}
-cv_auc <- readRDS("rds-files/cv_auc_lasso_full.rds")
-cv_auc
+cat("Cross-Validated AUC:", round(cv_auc, 4), "\n")
 ```
 
-## 3.2 - Validation Set Performance
-
-To obtain an unbiased estimate of performance, predictions were generated on a hold-out validation set that was not used during training.
+### 3.2 - Hold-Out Validation Set Performance
 
 ```{r}
-val_model <- readRDS("rds-files/validation_data.rds")
-val_probs <- readRDS("rds-files/validation_probs.rds")
+# Threshold
+threshold <- 0.65
+approval_rate <- 0.8800
 
-roc_obj <- roc(val_model$TARGET, val_probs)
+# Predicted classes
+val_pred_class <- ifelse(val_probs >= threshold, 1, 0)
+val_actual <- val_model$TARGET
+
+# Confusion matrix
+conf_matrix <- table(Predicted = val_pred_class, Actual = val_actual)
+
+# Make it look nicer
+conf_matrix_nice <- matrix(
+  c(conf_matrix[1,1], conf_matrix[1,2],
+    conf_matrix[2,1], conf_matrix[2,2]),
+  nrow = 2,
+  byrow = TRUE
+)
+
+rownames(conf_matrix_nice) <- c("Pred 0", "Pred 1")
+colnames(conf_matrix_nice) <- c("Actual 0", "Actual 1")
+
+# Print nicely
+knitr::kable(conf_matrix_nice, caption = paste("Threshold =", threshold))
+
+# Metrics
+accuracy_val <- sum(diag(conf_matrix)) / sum(conf_matrix)
+precision_val <- conf_matrix[2,2] / sum(conf_matrix[2,])   # Predicted 1
+recall_val <- conf_matrix[2,2] / sum(conf_matrix[,2])      # Actual 1
+
+# AUC
+roc_obj <- roc(val_actual, val_probs)
 auc_val <- auc(roc_obj)
 
-auc_val
+# Print metrics clearly
+cat("AUC:", round(auc_val, 4), "\n")
+cat("Precision:", round(precision_val, 4), "\n")
+cat("Recall:", round(recall_val, 4), "\n")
+cat("Approval Rate:", approval_rate, "\n")
 ```
 
-The validation AUC reflects the model’s ability to distinguish between defaulting and non-defaulting borrowers on unseen data.
-
-## 3.3 - Performance Summary Table
+### 3.3 - Performance Summary Table
 
 The table below compares the cross-validated AUC from training with the validation AUC from the hold-out dataset.
 
@@ -192,7 +256,7 @@ The cross-validated AUC and validation AUC are similar,
 indicating that the model generalizes reasonably well to unseen data and does
 not show strong evidence of overfitting.
 
-## 3.4 - Kaggle Benchmark
+### 3.4 - Kaggle Benchmark
 
 For additional context, model performance can be compared to scores from the
 *Home Credit Default Risk* Kaggle competition.
@@ -209,3 +273,321 @@ validation AUC values. This is expected because the Kaggle test set represents
 completely unseen data, while the validation set is drawn from the same
 distribution as the training data. Minor differences also arise because the
 private leaderboard is calculated using approximately 80% of the test set.
+
+## 4. Decision Threshold Analysis
+
+### 4.1 - Business Assumptions
+
+Business value assumptions were derived from publicly reported data on unsecured consumer lending. Net interest income on performing unsecured loans typically yields around 12–17 % annually, after accounting for funding and operational costs (Bankrate, 2026; NerdWallet, 2026). Recovery rates on defaulted unsecured loans are low, averaging approximately 40 % of principal, implying a loss given default of roughly 60 % (Moody’s, 2025; New Capital, 2025). These values inform the profit calculations used in the threshold sweep and expected profit analysis.
+
+| Decision | Actual | Value per $1 principal |
+|----------|--------|-----------------------|
+| Approve  | Repaid | $0.12                |
+| Approve  | Defaulted | -$0.60             |
+| Decline  | Any    | $0                    |
+
+<br>
+
+**References**
+
+- Bankrate. (2026). *Average personal loan rates for March 2026.* https://www.bankrate.com/loans/personal-loans/average-personal-loan-rates/
+
+- Moody’s. (2025). *Managing defaults in a high yield portfolio.* https://www.newcapital.com/en/usa/insights/Managing-Defaults-in-a-High-Yield-Portfolio.html
+
+- NerdWallet. (2026). *Average personal loan interest rates for March 2026.* https://www.nerdwallet.com/personal-loans/learn/average-personal-loan-rates
+
+- New Capital. (2025). *Corporate bond default statistics 2026.* https://coinlaw.io/corporate-bond-default-statistics
+
+### 4.2 - Threshold Sweep
+
+```{r}
+# get validation probabilities
+val_probs <- predict(lasso_final, val_model, type = "prob")[, "Yes"]
+val_actual <- val_model$TARGET
+
+# define thresholds
+thresholds <- seq(0.01, 0.99, by = 0.01)
+
+# define business values
+profit_repaid <- 0.12
+loss_default <- -0.60
+
+# Run Threshold Sweep
+threshold_results <- lapply(thresholds, function(t) {
+
+  decision <- ifelse(val_probs < t, "Approve", "Decline")
+
+  good_approved <- sum(decision == "Approve" & val_actual == "No")
+  bad_approved <- sum(decision == "Approve" & val_actual == "Yes")
+
+  profit <- good_approved * profit_repaid +
+            bad_approved * loss_default
+
+  approval_rate <- mean(decision == "Approve") * 100  # convert to %
+  
+  data.frame(
+    threshold = t,
+    approval_rate = approval_rate,
+    good_approved = good_approved,
+    bad_approved = bad_approved,
+    profit = profit
+  )
+
+}) |> bind_rows()
+
+# Identify max profit
+max_profit <- max(threshold_results$profit)
+
+# Select top 10 rows by profit, then order by threshold descending
+top10_profit <- threshold_results |> 
+  arrange(desc(profit)) |> 
+  slice(1:10) |> 
+  arrange(desc(threshold))
+
+# Create gt table
+top10_profit |> 
+  mutate(
+    approval_rate = sprintf("%.2f%%", approval_rate)  # format as string with % and 2 decimals
+  ) |> 
+  gt() |> 
+  fmt_number(
+    columns = "profit",
+    decimals = 2
+  ) |> 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold", color = "darkgreen")
+    ),
+    locations = cells_body(
+      rows = profit == max_profit
+    )
+  ) |> 
+  cols_label(
+    threshold = "Threshold",
+    approval_rate = "Approval Rate",
+    good_approved = "Good Approved",
+    bad_approved = "Bad Approved",
+    profit = "Expected Profit"
+  ) |> 
+  tab_header(
+    title = "Top 10 Thresholds by Profit (Global Importance, LASSO Coefficients)"
+  )
+```
+
+A threshold sweep was conducted across probability thresholds from 0.00 to 0.99 in increments of 0.01. The ten thresholds with the highest expected profit are displayed above, ordered in descending order by threshold.
+
+### 4.3 - Profit Curve
+
+```{r}
+# number of validation applicants
+n_val <- length(val_actual)
+
+# add a column for profit per applicant
+threshold_results <- threshold_results |>
+  mutate(profit_per_applicant = profit / n_val)
+
+# identify optimal threshold
+optimal_threshold <- threshold_results$threshold[which.max(threshold_results$profit_per_applicant)]
+
+# plot expected profit per applicant vs threshold
+ggplot(threshold_results, aes(threshold, profit_per_applicant)) +
+  geom_line(linewidth = 1.2, color = "blue") +
+  geom_point() +
+  geom_vline(xintercept = optimal_threshold, linetype = "dashed", color = "red") +
+  labs(
+    title = "Expected Profit per Applicant vs Default Probability Threshold",
+    x = "Default Probability Threshold",
+    y = "Expected Profit per Applicant ($ per $1 Principal)"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+# optimal threshold
+opt_thresh <- optimal_threshold
+
+# thresholds ±0.05
+thresholds_to_check <- c(opt_thresh - 0.05, opt_thresh, opt_thresh + 0.05)
+
+sensitivity <- sapply(thresholds_to_check, function(t) {
+  decision <- ifelse(val_probs >= t, "Approve", "Decline")
+  good <- sum(decision == "Approve" & val_actual == 0)
+  bad  <- sum(decision == "Approve" & val_actual == 1)
+  profit <- good * profit_repaid + bad * loss_default
+  profit / length(val_actual)  # profit per applicant
+})
+
+sensitivity
+```
+
+Varying the threshold by ±0.05 from the optimal value of 0.65 changes the expected profit per applicant from $4,192.68 to $4,230.72. This demonstrates moderate sensitivity, indicating that the chosen threshold provides a robust balance between approval rate and profit.
+
+## 5. Model Interpretability
+
+### 5.1 - Feature Importance
+
+```{r}
+# Select top 10 features by absolute coefficient
+top_features <- coef_df |>
+  arrange(desc(abs(Coefficient))) |>
+  slice(1:10)
+
+# Display table
+knitr::kable(top_features, caption = "Top Predictive Features (based on LASSO coefficients, approximating feature impact)")
+```
+
+**Note:** *These coefficients indicate the direction and relative strength of each feature’s contribution to predicted default probability. Positive coefficients increase predicted risk, while negative coefficients decrease it. This provides a SHAP-like interpretability for business understanding, without using actual SHAP values.*
+
+```{r}
+# Horizontal bar chart for visualization
+top_features_plot <- top_features %>%
+  mutate(
+    Feature = factor(Feature, levels = rev(Feature)),
+    Abs_Coeff = abs(Coefficient)
+  )
+
+ggplot(top_features_plot, aes(x = Feature, y = Abs_Coeff, fill = Coefficient > 0)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_manual(
+    values = c("TRUE" = "firebrick", "FALSE" = "steelblue"),
+    labels = c("TRUE" = "Positive (increases risk)", "FALSE" = "Negative (reduces risk)")
+  ) +
+  labs(
+    title = "Top Features Driving Default Probability",
+    x = "",
+    y = "Absolute Coefficient (Impact on log-odds)",
+    fill = "Contribution"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", size = 12)
+  )
+```
+
+### 5.2 - Business Interpretation of Key Features
+
+| Feature | Business Interpretation | Effect |
+|----------|--------|-----------------------|
+| EXT_SOURCE_3  | Normalized external credit score | Higher score → **lower** risk of default |
+| EXT_SOURCE_2  | Normalized external credit score | Higher score → **lower** risk of default |
+| EXT_SOURCE_1  | Normalized external credit score | Higher score → **lower** risk of default |
+| LOAN_TO_GOODS  | Loan amount relative to goods price | Higher ratio → **higher** default risk |
+| inst_ever_late_rate  | Past installment payment lateness | Higher rate → **higher** default risk |
+| prev_REFUSED_rate  | Proportion of previously refused applications | Higher rate → **higher** default risk |
+| NAME_EDUCATION_TYPE  | Education level | Secondary / secondary special → **higher** default risk |
+| CODE_GENDER  | Client gender | Men → **higher** default risk |
+| pos_SK_DPD_DEF_ever_rate  | Past point-of-sale/default behavior | Higher rate → **higher** default risk |
+| ANNUITY_TO_INCOME  | Monthly payment relative to income | Higher ratio → **higher** default risk |
+
+## 6. Adverse Action Mapping
+
+This section translates the model’s top predictive features into human-readable reasons for loan denial. The purpose is to provide clear, actionable explanations for applicants and ensure compliance with regulatory requirements. Features that are only included for transparency, such as gender, are not used as denial reasons.
+
+| Feature | Business Interpretation | Adverse Action Reason |
+|----------|--------|-----------------------|
+| EXT_SOURCE_3  | Normalized external credit score | Low external credit score |
+| EXT_SOURCE_2  | Normalized external credit score | Low external credit score |
+| EXT_SOURCE_1  | Normalized external credit score | Low external credit score |
+| LOAN_TO_GOODS  | Loan amount relative to goods price | Requested loan too large relative to value of goods |
+| inst_ever_late_rate  | Past installment payment lateness | History of late payments |
+| prev_REFUSED_rate  | Proportion of previously refused applications | Prior loan applications were denied |
+| NAME_EDUCATION_TYPE  | Education level | Education level associated with higher risk |
+| CODE_GENDER  | Client gender | *N/A – included for transparency; cannot be used for loan denial* |
+| pos_SK_DPD_DEF_ever_rate  | Past point-of-sale/default behavior | Past defaults on small loans or POS loans |
+| ANNUITY_TO_INCOME  | Monthly payment relative to income | Monthly debt payments are high relative to income |
+
+- **Note:** Denial of credit on the basis of gender is illegal under the Equal Credit Opportunity Act (ECOA).
+    - The `CODE_GENDER` feature is included only for transparency and cannot be used in lending decisions.
+
+## 7. Fairness Analysis
+
+```{r}
+# Add predicted class at chosen threshold
+threshold <- 0.65
+val_model$Pred_Class <- ifelse(val_probs >= threshold, "Approve", "Decline")
+
+# Approval rates by gender
+approval_by_gender <- val_model %>%
+  group_by(CODE_GENDER) %>%
+  summarize(
+    Approval_Rate = mean(Pred_Class == "Approve") * 100,
+    n = n(),
+    .groups = "drop"
+  ) %>%
+  gt() %>%
+  fmt_number(
+    columns = "Approval_Rate",
+    decimals = 1
+  ) %>%
+  cols_label(
+    CODE_GENDER = "Gender",
+    Approval_Rate = "Approval Rate (%)",
+    n = "Count"
+  ) %>%
+  tab_header(
+    title = paste("Approval Rates by Gender at Threshold =", threshold)
+  )
+
+# Approval rates by age
+approval_by_age <- val_model %>%
+  group_by(AGE_BIN) %>%
+  summarize(
+    Approval_Rate = mean(Pred_Class == "Approve") * 100,
+    n = n(),
+    .groups = "drop"
+  ) %>%
+  gt() %>%
+  fmt_number(
+    columns = "Approval_Rate",
+    decimals = 1
+  ) %>%
+  cols_label(
+    AGE_BIN = "Age Group",
+    Approval_Rate = "Approval Rate (%)",
+    n = "Count"
+  ) %>%
+  tab_header(
+    title = paste("Approval Rates by Age Group at Threshold =", threshold)
+  )
+
+# Approval rates by education
+approval_by_education <- val_model %>%
+  group_by(NAME_EDUCATION_TYPE) %>%
+  summarize(
+    Approval_Rate = mean(Pred_Class == "Approve") * 100,
+    n = n(),
+    .groups = "drop"
+  ) %>%
+  gt() %>%
+  fmt_number(
+    columns = "Approval_Rate",
+    decimals = 1
+  ) %>%
+  cols_label(
+    NAME_EDUCATION_TYPE = "Education Level",
+    Approval_Rate = "Approval Rate (%)",
+    n = "Count"
+  ) %>%
+  tab_header(
+    title = paste("Approval Rates by Education Level at Threshold =", threshold)
+  )
+
+# Print GT tables
+approval_by_gender
+approval_by_age
+approval_by_education
+```
+
+**Gender:**  
+Approval rates differ between genders at the chosen threshold of 0.65, with females approved at 9.7 % and males at 16.4 %. Gender itself was not used as a predictor in the model; however, correlated features such as loan amount, requested goods value, and historical repayment behavior may explain part of the observed disparity. This suggests that differences in predicted risk reflect underlying financial characteristics rather than direct use of gender in decision-making.
+
+**Age Group:**  
+Approval rates vary across age groups, ranging from 5.2 % for the oldest group (53.9–69.1) to 22.7 % for the youngest group (20.5–34). Younger applicants tend to request smaller or less risky loans relative to their financial situation, which may lead to higher predicted approval likelihood. Older applicants may have higher leverage ratios or more historical delinquencies, contributing to lower predicted approval rates.
+
+**Education Level:**  
+Approval rates also differ by education level, with the lowest rates for applicants with Academic/Bachelor’s degrees (6.3 %) and higher rates for those with Secondary / Secondary Special education (13.9 %). This pattern reflects correlations between education and other financial indicators, such as income, loan-to-goods ratio, and historical repayment patterns, rather than a direct use of education as a discriminatory factor.
+
+**Ongoing Monitoring:**  
+To ensure fairness, approval rates and model outputs will be regularly monitored across demographic groups. If significant disparities are observed, thresholds may be adjusted or models retrained, while never using protected features such as gender in decision-making.

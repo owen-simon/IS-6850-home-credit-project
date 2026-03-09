@@ -48,6 +48,28 @@ The modeling notebook demonstrates the predictive modeling workflow applied to t
   - Code is structured to allow re-fitting and evaluation on new datasets
   - CV and test metrics are clearly labeled for easy comparison
 
+## Model Card Notebook
+
+The **Credit Default Prediction Model Card** notebook provides a comprehensive, business-focused summary of the final LASSO model developed for predicting loan defaults. It is designed for stakeholders, analysts, and regulatory reviewers, highlighting model behavior, interpretability, and fairness.
+
+Key content includes:
+
+- **Business Context & Analytics Approach:** Explains the challenge of evaluating creditworthiness for applicants with limited credit history and the role of alternative data sources in estimating repayment probabilities.
+
+- **Key Recommendations & Decision Thresholds:** Outlines how predicted probabilities can be used for loan approval, including a data-driven threshold that balances expected profit and default risk.
+
+- **Model Details:** Documents the algorithm type, training procedure, hyperparameters, and training dataset composition, ensuring transparency and reproducibility.
+
+- **Performance Metrics:** Reports cross-validated and hold-out validation AUC, threshold-dependent metrics (precision, recall, approval rate), expected profit analysis, and benchmark comparisons.
+
+- **Interpretability & Feature Importance:** Highlights the top predictive features and their business interpretation, including a SHAP-like perspective using LASSO coefficients and visualizations.
+
+- **Adverse Action & Fairness Analysis:** Maps features to human-readable denial reasons for compliance and includes approval rate analysis across demographic groups to assess and mitigate potential bias.
+
+- **Deployment Considerations & Caveats:** Discusses limitations, regulatory constraints, and considerations for applying the model to new populations or products.
+
+This notebook complements the modeling workflow by translating technical outputs into actionable insights for decision-making, lending transparency, and regulatory compliance.
+
 ## Repository Structure
 
 The repository contains the following files and folders:
@@ -57,5 +79,6 @@ The repository contains the following files and folders:
   - `test_final.csv`      The processed test dataset.
 - `EDA.qmd`               Exploratory data analysis of the raw CSV datasets.
 - `Feature_Engineering.R` R script for data cleaning and feature engineering.
-- `Modeling.qmd`     Notebook documenting model trails, evaluation metrics, and final model selection.
+- `Model_Card.qmd`        Notebook summarizing the final model, threshold analysis, feature importance, and fairness considerations.
+- `Modeling.qmd`          Notebook documenting model experiments, evaluation metrics, and final model selection.
 - `README.md`             This project documentation.
