@@ -21,6 +21,7 @@ Thumbs.db
 *.xls
 *.json
 *.rds
+*.docx
 
 # Test Environment
 Test_Environment.qmd
