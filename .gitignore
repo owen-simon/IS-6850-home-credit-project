@@ -14,6 +14,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Text documents
+*.docx
+
 # Data files (ignore raw or large data)
 *.csv
 *.tsv
@@ -21,7 +24,6 @@ Thumbs.db
 *.xls
 *.json
 *.rds
-*.docx
 
 # Test Environment
 Test_Environment.qmd
