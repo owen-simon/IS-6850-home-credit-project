@@ -1,5 +1,3 @@
-# IS-6850 Home Credit Project
-
 This repository contains my University of Utah MSBA Capstone Project for IS 6850. The project focuses on feature engineering and data preparation for the **Home Credit Default Risk** dataset, producing a high-quality dataset suitable for predictive modeling.
 
 ## Project Overview
