@@ -416,8 +416,6 @@ sensitivity <- sapply(thresholds_to_check, function(t) {
   profit <- good * profit_repaid + bad * loss_default
   profit / length(val_actual)  # profit per applicant
 })
-
-sensitivity
 ```
 
 Varying the threshold by ±0.05 from the optimal value of 0.65 changes the expected profit per applicant from $4,192.68 to $4,230.72. This demonstrates moderate sensitivity, indicating that the chosen threshold provides a robust balance between approval rate and profit.
