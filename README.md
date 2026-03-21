@@ -72,8 +72,6 @@ This notebook complements the modeling workflow by translating technical outputs
 
 The repository contains the following files and folders:
 
-## Repository Structure
-
 - `notebooks/`  
   Contains all Quarto source documents (`.qmd`) for the project, including:
   - `EDA.qmd` – Exploratory data analysis of the raw CSV datasets.
