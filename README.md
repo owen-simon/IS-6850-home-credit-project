@@ -1,8 +1,8 @@
-This repository contains my University of Utah MSBA Capstone Project for IS 6850. The project focuses on feature engineering and data preparation for the **Home Credit Default Risk** dataset, producing a high-quality dataset suitable for predictive modeling.
+This repository contains my University of Utah MSBA Capstone Project for IS 6850. The project focuses on integrating and engineering features from the multiple datasets provided in the **[Home Credit Default Risk](https://www.kaggle.com/competitions/home-credit-default-risk/data)** competition, resulting in consolidated training and testing datasets ready for predictive modeling.
 
 ## Project Overview
 
-The goal of this project is to clean, transform, and enrich application data to improve model performance and reliability. Key tasks include:
+The goal of this project is to clean, transform, and engineer application data to improve model performance and reliability. Key tasks include:
 
 - **Data Cleaning**
   - Fix anomalies such as `DAYS_EMPLOYED = 365243`  
