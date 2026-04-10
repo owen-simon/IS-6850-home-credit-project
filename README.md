@@ -74,20 +74,12 @@ This notebook complements the modeling workflow by translating technical outputs
 
 The repository contains the following files and folders:
 
-- `notebooks/`  
-  Contains all Quarto source documents (`.qmd`) for the project, including:
-  - `EDA.qmd` – Exploratory data analysis of the raw CSV datasets.
-  - `Modeling.qmd` – Model experiments, evaluation metrics, and final model selection.
-  - `Model_Card.qmd` – Final model summary, threshold analysis, feature importance, and fairness considerations.
+- `notebooks/`: Contains all Quarto source documents (`.qmd`) for the project, including:
+  - `EDA.qmd`: Exploratory data analysis of the raw CSV datasets.
+  - `Modeling.qmd`: Model experiments, evaluation metrics, and final model selection.
+  - `Model_Card.qmd`: Final model summary, threshold analysis, feature importance, and fairness considerations.
 
-- `*.html`  
-  Rendered HTML outputs of the Quarto notebooks, located in the root of the repository for easy viewing.
-
-- `BusinessProblemStatement.pdf`  
-  Formal description of the business objective, stakeholders, constraints, and success criteria.
-
-- `Feature_Engineering.R`  
-  R script for data cleaning and feature engineering.
-
-- `README.md`  
-  Project documentation and overview.
+- `*.html`: Rendered HTML outputs of the Quarto notebooks, located in the root of the repository for easy viewing.
+- `BusinessProblemStatement.pdf`: Formal description of the business objective, stakeholders, constraints, and success criteria.
+- `Feature_Engineering.R`: R script for data cleaning and feature engineering.
+- `README.md`:  Project documentation and overview.
